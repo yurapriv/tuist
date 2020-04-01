@@ -31,6 +31,7 @@ public final class CommandRegistry {
         register(command: CacheCommand.self)
         register(command: LintCommand.self)
         register(command: SigningCommand.self)
+        register(command: DocumentationCommand.self)
         register(rawCommand: BuildCommand.self)
     }
 
