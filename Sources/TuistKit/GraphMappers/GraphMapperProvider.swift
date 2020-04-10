@@ -26,6 +26,8 @@ final class GraphMapperProvider: GraphMapperProviding {
 
         // Delete the derived directories
         mappers.append(DeleteDerivedDirectoryGraphMapper())
+        
+        mappers.append(BundleLibraryResourcesGraphMapper())
 
         // Cache
         if useCache {

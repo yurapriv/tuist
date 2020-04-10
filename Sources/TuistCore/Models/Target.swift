@@ -26,7 +26,7 @@ public struct Target: Equatable, Hashable {
     public let entitlements: AbsolutePath?
     public let settings: Settings?
     public let dependencies: [Dependency]
-    public let sources: [SourceFile]
+    public private(set) var sources: [SourceFile]
     public private(set) var resources: [FileElement]
     public let headers: Headers?
     public let coreDataModels: [CoreDataModel]
@@ -192,6 +192,15 @@ public struct Target: Equatable, Hashable {
     /// - Parameter resources: Resources to be set to the copy.
     /// - Returns: Copy of the target with the given resources.
     public func with(resources: [FileElement]) -> Target {
+        var copy = self
+        copy.resources = resources
+        return copy
+    }
+    
+    /// Returns a copy of the target with the given sources.
+    /// - Parameter sources: Sources to be set to the copy.
+    /// - Returns: Copy of the target with the given sources.
+    public func with(sources: [SourceFile]) -> Target {
         var copy = self
         copy.resources = resources
         return copy
