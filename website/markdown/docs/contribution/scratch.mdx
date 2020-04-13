@@ -5,6 +5,28 @@ excerpt: Random ideas and notes for Tuist. Pseudocode and braindumps.
 
 # Scratch
 
+## April 13rd 2020 - Automation and custom schemes
+
+I've thinking for a while about whether it's or not a good idea to support defining custom schemes.
+I think it's handy for those projects that have complex scheme configurations, and want to migrate to Tuist,
+but I think is a good example of something that can be abstracted away and simplified,
+like we did with the definition of dependencies.
+
+There are features that we are planning for Tuist,
+like selective builds and test runs,
+that I doubt they can work reliably unless we have full-control over the schemes that we pass to `xcodebuild`.
+Without that control,
+we might end up **assuming many things about how developers configure the schemes**,
+and that might result in unexpected results.
+
+Another stand that we can take is analyzing the custom schemes and failing if something is not configured as expected for the command.
+However, that'll result in a poor user experience: _why is `tuist build` not working?_ _why does it say that I have to change this thing in the scheme?_
+
+We should continue to support custom schemes for those projects that only use Tuist for project generation,
+and apply ["the carrot and stick"](https://en.wikipedia.org/wiki/Carrot_and_stick) principle.
+At some point the value they'd get from letting Tuist control the schemes will be so substantial,
+that they will no longer feel the need of having to customize the schemes themselves.
+
 ## April 1st 2020 - Explicitness for the cache to work reliably.
 
 In order to be able to reliably build .xcframeworks and cache them, it's important that the definition of the targets is as explicit as possible. For instance, if a framework doesn't declare a dependency with `XCTest` and it imports it, that'll cause the compilation of the framework for a device to fail. We should include a section in the cache documentation with some best practices.
