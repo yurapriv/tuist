@@ -1,0 +1,58 @@
+---
+name: Build
+excerpt: 'Learn how to edit your manifest files using Xcode and get documentation, syntax highliting and auto-completion, and validation by Xcode.'
+---
+
+# Build targets
+
+One of the most common tasks when working on a project is building the code.
+In the Xcode land,
+developers either use Xcode and build schemes,
+or run `xcodebuild` commands from their terminal.
+Since `xcodebuild` expects a mimimun set of arguments,
+which developers need to remember,
+most projects resort to tools like [Fastlane](https://fastlane.tools/) to simplify the command line interface,
+and build richer workflows by combining `xcodebuild` with other tools.
+
+That approach works great,
+but presents **some issues when it's used at scale**:
+
+- The code in those automation files is usually not tested. That results in some scripts breaking without anyone noticing it. A good example of this is the release logic. Release captains might stumble upon issues during the release process, which they need to sort out and fix. This leads to frustration.
+- It's rare seeing app developers caring about the automation code as much as they care about the code they add to the apps. As a consequence, the scripts end up being massive and tangled pieces of code that are hard to maintain and reason about. The quality of that code usually correlates with the investment the project/company does into tooling.
+
+This is not Fastlane's blame — app developers don't feel owners of the code that lives outside their domain of work.
+The matter is even worse if the code they have to write is not the one they are most familiar with _(e.g. writing Ruby instead of Swift)_.
+
+To prevent this, **Tuist takes a different approach** by leveraging the knowledge it has on your projects.
+Rather than developers having to maintain automation scripts and code,
+it derives a conventional set of commands off your projects.
+Those commands are built upon Xcode's primitives like `xcodebuild` or `simctl`.
+
+One of those commands is `tuist build`,
+which allows building a target or all the targets of a project.
+
+## Command
+
+Being in a directory where a project is defined,
+we can run the following command to build all the buildable targets of that directory:
+
+```
+tuist build
+```
+
+It is also possible to build only one target:
+
+```
+tuist build MyTarget
+```
+
+Here are some supported options that can be passed to the command:
+
+- `--clean`: Cleans the project before building it.
+- `--path`: Runs for a project in a different directory.
+
+<Message
+  warning
+  title="Auto-generated schemes"
+  description="The build command only works if the project configures Tuist to auto-generate the schemes. For example, if the project has a custom scheme 'MyScheme', `tuist build MyScheme` won't work. This is a thorough decision in the aim of providing a reliable experience."
+/>
