@@ -17,4 +17,12 @@ public enum XcodeBuildTarget {
             return ["-workspace", path.pathString]
         }
     }
+
+    /// Returns the target path.
+    public var path: AbsolutePath {
+        switch self {
+        case let .project(path): return path
+        case let .workspace(path): return path
+        }
+    }
 }

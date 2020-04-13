@@ -42,6 +42,12 @@ task :release do
   release
 end
 
+desc("Builds and packages Tuist for release")
+task :package do
+  decrypt_secrets
+  package
+end
+
 desc("Publishes the installation scripts")
 task :release_scripts do
   decrypt_secrets
