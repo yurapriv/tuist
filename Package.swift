@@ -39,6 +39,7 @@ let package = Package(
         .package(url: "https://github.com/httpswift/swifter.git", .upToNextMajor(from: "1.4.7")),
         .package(url: "https://github.com/apple/swift-tools-support-core", .upToNextMinor(from: "0.1.1")),
         .package(url: "https://github.com/apple/swift-argument-parser", .exact("0.0.4")),
+        .package(url: "https://github.com/AvdLee/appstoreconnect-swift-sdk", .upToNextMajor(from: "1.1.1")),
     ],
     targets: [
         .target(
@@ -199,7 +200,7 @@ let package = Package(
         ),
         .target(
             name: "TuistSigning",
-            dependencies: ["TuistCore", "TuistSupport", "CryptoSwift"]
+            dependencies: ["TuistCore", "TuistSupport", "CryptoSwift", "AppStoreConnect-Swift-SDK"]
         ),
         .target(
             name: "TuistSigningTesting",

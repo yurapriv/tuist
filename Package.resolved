@@ -11,6 +11,15 @@
         }
       },
       {
+        "package": "AppStoreConnect-Swift-SDK",
+        "repositoryURL": "https://github.com/AvdLee/appstoreconnect-swift-sdk",
+        "state": {
+          "branch": null,
+          "revision": "4cd4025d7a28c3cf4dfc81d1eca8ffc2d2df5911",
+          "version": "1.1.1"
+        }
+      },
+      {
         "package": "Signals",
         "repositoryURL": "https://github.com/IBM-Swift/BlueSignals",
         "state": {
