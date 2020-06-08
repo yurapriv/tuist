@@ -1,8 +1,9 @@
 import Foundation
 import RxSwift
 import TSCBasic
+import Zip
 
-enum FileDownloaderError: LocalizedError {
+enum ArchiveDownloaderError: LocalizedError {
     case noLocalURL
     case invalidResponse
     case urlSessionError(Error)
@@ -30,7 +31,7 @@ enum FileDownloaderError: LocalizedError {
     }
 }
 
-class FileDownloader {
+class ArchiveDownloader {
     private let urlSession: URLSession
     private let fileManager: FileManager
 
@@ -43,17 +44,17 @@ class FileDownloader {
         Single.create { observer -> Disposable in
             let task = self.urlSession.downloadTask(with: url) { localURL, response, networkError in
                 if let networkError = networkError {
-                    observer(.error(FileDownloaderError.urlSessionError(networkError)))
+                    observer(.error(ArchiveDownloaderError.urlSessionError(networkError)))
                 } else if let response = response as? HTTPURLResponse {
                     // Local URL
                     guard let localURL = localURL else {
-                        observer(.error(FileDownloaderError.noLocalURL))
+                        observer(.error(ArchiveDownloaderError.noLocalURL))
                         return
                     }
 
                     self.processResponse(response, observer: observer, localURL: localURL, directory: directory)
                 } else {
-                    observer(.error(FileDownloaderError.invalidResponse))
+                    observer(.error(ArchiveDownloaderError.invalidResponse))
                 }
             }
 
@@ -61,7 +62,7 @@ class FileDownloader {
             return Disposables.create { task.cancel() }
         }
     }
-
+    
     // MARK: - Fileprivate
 
     private func processResponse(_ response: HTTPURLResponse,
@@ -73,13 +74,17 @@ class FileDownloader {
         case 200 ..< 300:
             // Success
             do {
-                try fileManager.moveItem(atPath: localURL.path, toPath: directory.pathString)
+                try Zip.unzipFile(localURL,
+                                  destination: directory.asURL,
+                                  overwrite: true,
+                                  password: nil)
                 observer(.success(directory))
             } catch {
-                observer(.error(FileDownloaderError.moveFileError(error)))
+                observer(.error(ArchiveDownloaderError.moveFileError(error)))
             }
-        default: // Error
-            observer(.error(FileDownloaderError.invalidResponse))
+        // Error
+        default:
+            observer(.error(ArchiveDownloaderError.invalidResponse))
         }
     }
 }
