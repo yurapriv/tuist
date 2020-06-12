@@ -62,7 +62,7 @@ class ArchiveDownloader {
             return Disposables.create { task.cancel() }
         }
     }
-    
+
     // MARK: - Fileprivate
 
     private func processResponse(_ response: HTTPURLResponse,
