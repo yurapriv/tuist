@@ -60,6 +60,10 @@ extension AbsolutePath {
     public func sha256() -> Data? {
         try? SHA256Digest.file(at: url)
     }
+
+    public func md5() throws -> String {
+        try Data(contentsOf: url).md5
+    }
 }
 
 extension AbsolutePath: ExpressibleByStringLiteral {
