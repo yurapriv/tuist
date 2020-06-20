@@ -2,11 +2,14 @@ import Foundation
 import TSCBasic
 import TuistCore
 import TuistSupport
+import RxBlocking
 
 /// Interacts with signing
 public protocol SigningInteracting {
     /// Install signing for a given graph
     func install(graph: Graph) throws
+    /// Generates signing for a given graph
+    func vendor(graph: Graph) throws
 }
 
 public final class SigningInteractor: SigningInteracting {
@@ -17,24 +20,31 @@ public final class SigningInteractor: SigningInteracting {
     private let signingLinter: SigningLinting
     private let securityController: SecurityControlling
     private let signingCipher: SigningCiphering
-
+    private let appStoreConnectController: AppStoreConnectControlling
+    
     public convenience init() {
-        self.init(signingFilesLocator: SigningFilesLocator(),
-                  rootDirectoryLocator: RootDirectoryLocator(),
-                  signingMatcher: SigningMatcher(),
-                  signingInstaller: SigningInstaller(),
-                  signingLinter: SigningLinter(),
-                  securityController: SecurityController(),
-                  signingCipher: SigningCipher())
+        self.init(
+            signingFilesLocator: SigningFilesLocator(),
+            rootDirectoryLocator: RootDirectoryLocator(),
+            signingMatcher: SigningMatcher(),
+            signingInstaller: SigningInstaller(),
+            signingLinter: SigningLinter(),
+            securityController: SecurityController(),
+            signingCipher: SigningCipher(),
+            appStoreConnectController: AppStoreConnectController()
+        )
     }
-
-    init(signingFilesLocator: SigningFilesLocating,
-         rootDirectoryLocator: RootDirectoryLocating,
-         signingMatcher: SigningMatching,
-         signingInstaller: SigningInstalling,
-         signingLinter: SigningLinting,
-         securityController: SecurityControlling,
-         signingCipher: SigningCiphering) {
+    
+    init(
+        signingFilesLocator: SigningFilesLocating,
+        rootDirectoryLocator: RootDirectoryLocating,
+        signingMatcher: SigningMatching,
+        signingInstaller: SigningInstalling,
+        signingLinter: SigningLinting,
+        securityController: SecurityControlling,
+        signingCipher: SigningCiphering,
+        appStoreConnectController: AppStoreConnectControlling
+    ) {
         self.signingFilesLocator = signingFilesLocator
         self.rootDirectoryLocator = rootDirectoryLocator
         self.signingMatcher = signingMatcher
@@ -42,17 +52,59 @@ public final class SigningInteractor: SigningInteracting {
         self.signingLinter = signingLinter
         self.securityController = securityController
         self.signingCipher = signingCipher
+        self.appStoreConnectController = appStoreConnectController
     }
-
+    
+    public func vendor(graph: Graph) throws {
+        let entryPath = graph.entryPath
+        guard
+            let signingDirectory = try signingFilesLocator.locateSigningDirectory(from: entryPath)
+            else { return }
+        
+        try signingCipher.decryptSigning(at: entryPath, keepFiles: true)
+        defer { try? signingCipher.encryptSigning(at: entryPath, keepFiles: false) }
+        
+        let (certificates, provisioningProfiles) = try signingMatcher.match(from: graph.entryPath)
+        
+        try graph.projects.forEach { project in
+            try project.targets
+                .flatMap { target in
+                    target.signing.map { (target, $0) }
+            }
+            .forEach { target, signing in
+                let signingConfiguration: String
+                let signingTeamId: String
+                switch signing {
+                case let .development(teamId: teamId, configuration: configuration),
+                     let .distribution(teamId: teamId, configuration: configuration):
+                    signingConfiguration = configuration
+                    signingTeamId = teamId
+                }
+                // TODO: Check if certificate is valid, too
+                if let provisioningProfile = provisioningProfiles[target.name]?[signingConfiguration] {
+                    guard provisioningProfile.expirationDate > Date() else { return }
+                    logger.debug("Skipping generating provisioning profile \(provisioningProfile.name) is valid.")
+                }
+            }
+        }
+        
+        let remoteProvisioningProfiles = try appStoreConnectController
+            .provisioningProfiles()
+            .asSingle()
+            .toBlocking()
+            .single()
+        
+    }
+    
     public func install(graph: Graph) throws {
         let entryPath = graph.entryPath
         guard
             let signingDirectory = try signingFilesLocator.locateSigningDirectory(from: entryPath),
             let derivedDirectory = rootDirectoryLocator.locate(from: entryPath)?.appending(component: Constants.derivedFolderName)
-        else { return }
-
+            else { return }
+        
         let keychainPath = derivedDirectory.appending(component: Constants.signingKeychain)
-
+        
         let masterKey = try signingCipher.readMasterKey(at: signingDirectory)
         try FileHandler.shared.createFolder(derivedDirectory)
         if !FileHandler.shared.exists(keychainPath) {
@@ -60,12 +112,12 @@ public final class SigningInteractor: SigningInteracting {
         }
         try securityController.unlockKeychain(at: keychainPath, password: masterKey)
         defer { try? securityController.lockKeychain(at: keychainPath, password: masterKey) }
-
+        
         try signingCipher.decryptSigning(at: entryPath, keepFiles: true)
         defer { try? signingCipher.encryptSigning(at: entryPath, keepFiles: false) }
-
+        
         let (certificates, provisioningProfiles) = try signingMatcher.match(from: graph.entryPath)
-
+        
         try graph.projects.forEach { project in
             try project.targets.forEach {
                 try install(target: $0,
@@ -76,9 +128,9 @@ public final class SigningInteractor: SigningInteracting {
             }
         }
     }
-
+    
     // MARK: - Helpers
-
+    
     private func install(target: Target,
                          project: Project,
                          keychainPath: AbsolutePath,
@@ -92,16 +144,16 @@ public final class SigningInteractor: SigningInteracting {
                          uniquingKeysWith: { config, _ in config })
                 .keys
         )
-        .compactMap { configuration -> (certificate: Certificate, provisioningProfile: ProvisioningProfile)? in
-            guard
-                let provisioningProfile = provisioningProfiles[target.name]?[configuration.name],
-                let certificate = certificates[target.name]?[configuration.name]
-            else {
-                return nil
-            }
-            return (certificate: certificate, provisioningProfile: provisioningProfile)
+            .compactMap { configuration -> (certificate: Certificate, provisioningProfile: ProvisioningProfile)? in
+                guard
+                    let provisioningProfile = provisioningProfiles[target.name]?[configuration.name],
+                    let certificate = certificates[target.name]?[configuration.name]
+                    else {
+                        return nil
+                }
+                return (certificate: certificate, provisioningProfile: provisioningProfile)
         }
-
+        
         try signingPairs.map(\.certificate).forEach {
             try signingInstaller.installCertificate($0, keychainPath: keychainPath)
         }
@@ -109,7 +161,7 @@ public final class SigningInteractor: SigningInteracting {
         try signingPairs.map(\.provisioningProfile).flatMap {
             signingLinter.lint(provisioningProfile: $0, target: target)
         }.printAndThrowIfNeeded()
-
+        
         try signingPairs.flatMap(signingLinter.lint).printAndThrowIfNeeded()
         try signingPairs.map(\.certificate).flatMap(signingLinter.lint).printAndThrowIfNeeded()
     }

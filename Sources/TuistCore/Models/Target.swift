@@ -25,6 +25,7 @@ public struct Target: Equatable, Hashable {
     public var infoPlist: InfoPlist?
     public var entitlements: AbsolutePath?
     public var settings: Settings?
+    public let signing: [Signing]
     public var dependencies: [Dependency]
     public var sources: [SourceFile]
     public var resources: [FileElement]
@@ -45,6 +46,7 @@ public struct Target: Equatable, Hashable {
                 infoPlist: InfoPlist? = nil,
                 entitlements: AbsolutePath? = nil,
                 settings: Settings? = nil,
+                signing: [Signing] = [],
                 sources: [SourceFile] = [],
                 resources: [FileElement] = [],
                 headers: Headers? = nil,
@@ -62,6 +64,7 @@ public struct Target: Equatable, Hashable {
         self.infoPlist = infoPlist
         self.entitlements = entitlements
         self.settings = settings
+        self.signing = signing
         self.sources = sources
         self.resources = resources
         self.headers = headers
@@ -84,6 +87,7 @@ public struct Target: Equatable, Hashable {
                infoPlist: infoPlist,
                entitlements: entitlements,
                settings: settings,
+               signing: signing,
                sources: sources,
                resources: resources,
                headers: headers,

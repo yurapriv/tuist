@@ -31,6 +31,9 @@ public struct Target: Codable, Equatable {
 
     /// Target settings.
     public let settings: Settings?
+    
+    /// Signing
+    public let signing: [Signing]
 
     /// Target dependencies.
     public let dependencies: [TargetDependency]
@@ -62,6 +65,7 @@ public struct Target: Codable, Equatable {
         case infoPlist = "info_plist"
         case entitlements
         case settings
+        case signing
         case dependencies
         case sources
         case resources
@@ -87,6 +91,7 @@ public struct Target: Codable, Equatable {
     ///   - actions: target actions.
     ///   - dependencies: target dependencies.
     ///   - settings: target settings.
+    ///   - signing: target signing
     ///   - coreDataModels: CoreData models.
     ///   - environment: Environment variables to be exposed to the target.
     public init(name: String,
@@ -103,6 +108,7 @@ public struct Target: Codable, Equatable {
                 actions: [TargetAction] = [],
                 dependencies: [TargetDependency] = [],
                 settings: Settings? = nil,
+                signing: [Signing] = [],
                 coreDataModels: [CoreDataModel] = [],
                 environment: [String: String] = [:]) {
         self.name = name
@@ -114,6 +120,7 @@ public struct Target: Codable, Equatable {
         self.entitlements = entitlements
         self.dependencies = dependencies
         self.settings = settings
+        self.signing = signing
         self.sources = sources
         self.resources = resources
         self.headers = headers

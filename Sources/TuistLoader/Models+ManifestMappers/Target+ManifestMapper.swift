@@ -24,6 +24,9 @@ extension TuistCore.Target {
         let entitlements = try manifest.entitlements.map { try generatorPaths.resolve(path: $0) }
 
         let settings = try manifest.settings.map { try TuistCore.Settings.from(manifest: $0, generatorPaths: generatorPaths) }
+        
+        let signing = try manifest.signing.map(TuistCore.Signing.from)
+        
         let sources = try TuistCore.Target.sources(sources: manifest.sources?.globs.map { (glob: ProjectDescription.SourceFileGlob) in
             let globPath = try generatorPaths.resolve(path: glob.glob).pathString
             let excluding: [String] = try glob.excluding.compactMap { try generatorPaths.resolve(path: $0).pathString }
@@ -60,6 +63,7 @@ extension TuistCore.Target {
                                 infoPlist: infoPlist,
                                 entitlements: entitlements,
                                 settings: settings,
+                                signing: signing,
                                 sources: sources,
                                 resources: resources,
                                 headers: headers,
