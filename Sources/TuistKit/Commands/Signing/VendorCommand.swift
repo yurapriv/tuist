@@ -8,7 +8,7 @@ struct VendorCommand: ParsableCommand {
             abstract: "Generates all needed provisioning profiles and certificates "
         )
     }
-    
+
     func run() throws {
         try VendorService().run()
     }

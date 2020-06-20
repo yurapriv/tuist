@@ -31,7 +31,7 @@ public struct Target: Codable, Equatable {
 
     /// Target settings.
     public let settings: Settings?
-    
+
     /// Signing
     public let signing: [Signing]
 

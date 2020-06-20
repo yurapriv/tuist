@@ -1,24 +1,47 @@
 import AppStoreConnect_Swift_SDK
+import Foundation
 import RxSwift
 
-// TODO: Remove public
+struct RemoteProvisioningProfile {
+    let name: String
+    let profileContent: String
+    let expirationDate: Date
+}
+
+extension RemoteProvisioningProfile {
+    init?(_ profile: Profile) {
+        guard
+            let attributes = profile.attributes,
+            let name = attributes.name,
+            let profileContent = attributes.profileContent,
+            let expirationDate = attributes.expirationDate
+        else { return nil }
+
+        self.name = name
+        self.profileContent = profileContent
+        self.expirationDate = expirationDate
+    }
+}
 
 protocol AppStoreConnectControlling {
-    func provisioningProfiles() -> Observable<ProfilesResponse>
+    func provisioningProfiles(for apiKey: APIKey) -> Observable<[RemoteProvisioningProfile]>
 }
 
 final class AppStoreConnectController: AppStoreConnectControlling {
-    let configuration = APIConfiguration(
-        issuerID: "69a6de83-c998-47e3-e053-5b8c7c11a4d1",
-        privateKeyID: "R62H997UGZ",
-        privateKey: "MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg3OeXP6j7QjPOufTZUXR0TzzupYSLHQMWEh43xWWWGQagCgYIKoZIzj0DAQehRANCAARJ1aHt+ZIiqpMEg/RkkeRldzNhJMMQWALd9plXFNA4Qd+nr/g+wGYSjJ86AU4rwLEJ1Cj4ElU9j5jeNCNZbOY7"
-    )
-    
-    func provisioningProfiles() -> Observable<ProfilesResponse> {
-        let provider: APIProvider = APIProvider(configuration: configuration)
-        return provider.request(.listProfiles()).map {
-            $0
-        }
+    func provisioningProfiles(for apiKey: APIKey) -> Observable<[RemoteProvisioningProfile]> {
+        let provider = APIProvider(apiKey)
+        return provider.request(.listProfiles()).map { $0.data.compactMap(RemoteProvisioningProfile.init) }
+    }
+}
+
+private extension APIProvider {
+    convenience init(_ apiKey: APIKey) {
+        let configuration = APIConfiguration(
+            issuerID: apiKey.issuerId,
+            privateKeyID: apiKey.apiKeyId,
+            privateKey: apiKey.privateKey
+        )
+        self.init(configuration: configuration)
     }
 }
 

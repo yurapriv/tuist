@@ -5,6 +5,8 @@ import TuistSupport
 protocol SigningFilesLocating {
     func locateSigningDirectory(from path: AbsolutePath) throws -> AbsolutePath?
     func locateProvisioningProfiles(from path: AbsolutePath) throws -> [AbsolutePath]
+    func locateUnencryptedAPIKeys(from path: AbsolutePath) throws -> [AbsolutePath]
+    func locateEncryptedAPIKeys(from path: AbsolutePath) throws -> [AbsolutePath]
     func locateUnencryptedCertificates(from path: AbsolutePath) throws -> [AbsolutePath]
     func locateEncryptedCertificates(from path: AbsolutePath) throws -> [AbsolutePath]
     func locateUnencryptedPrivateKeys(from path: AbsolutePath) throws -> [AbsolutePath]
@@ -29,6 +31,16 @@ final class SigningFilesLocator: SigningFilesLocating {
     func locateProvisioningProfiles(from path: AbsolutePath) throws -> [AbsolutePath] {
         try locateSigningFiles(at: path)
             .filter { $0.extension == "mobileprovision" || $0.extension == "provisionprofile" }
+    }
+
+    func locateEncryptedAPIKeys(from path: AbsolutePath) throws -> [AbsolutePath] {
+        try locateSigningFiles(at: path)
+            .filter { $0.pathString.hasSuffix("p8.encrypted") }
+    }
+
+    func locateUnencryptedAPIKeys(from path: AbsolutePath) throws -> [AbsolutePath] {
+        try locateSigningFiles(at: path)
+            .filter { $0.extension == "p8" }
     }
 
     func locateUnencryptedCertificates(from path: AbsolutePath) throws -> [AbsolutePath] {

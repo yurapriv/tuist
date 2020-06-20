@@ -1,13 +1,11 @@
 import Foundation
-import TuistSigning
 import TuistCore
+import TuistSigning
 
 final class VendorService {
-    
     init() {
 //        self.graphLoader = graphLoader
     }
-    
-    func run() throws {
-    }
+
+    func run() throws {}
 }

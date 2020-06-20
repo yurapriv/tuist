@@ -3,18 +3,18 @@ import Foundation
 public enum Signing: Equatable, Codable {
     case development(teamId: String, configuration: String)
     case distribution(teamId: String, configuration: String)
-    
+
     private enum CodingKeys: String, CodingKey {
         case kind
         case teamId
         case configuration
     }
-    
+
     private enum Kind: String, Codable {
         case development
         case distribution
     }
-    
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let kind = try container.decode(Kind.self, forKey: .kind)

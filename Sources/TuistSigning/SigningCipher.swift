@@ -102,9 +102,6 @@ public final class SigningCipher: SigningCiphering {
                 try decryptData($0, masterKey: masterKey)
             }
 
-        try locateUnencryptedSigningFiles(at: path)
-            .forEach(FileHandler.shared.delete)
-
         try zip(decipheredKeys, signingKeyFiles).forEach { key, keyFile in
             logger.debug("Decrypting \(keyFile.pathString)")
             let decryptedPath = AbsolutePath(keyFile.parentDirectory.pathString + "/" + keyFile.basenameWithoutExt)
@@ -130,11 +127,15 @@ public final class SigningCipher: SigningCiphering {
     // MARK: - Helpers
 
     private func locateUnencryptedSigningFiles(at path: AbsolutePath) throws -> [AbsolutePath] {
-        try signingFilesLocator.locateUnencryptedCertificates(from: path) + signingFilesLocator.locateUnencryptedPrivateKeys(from: path)
+        try signingFilesLocator.locateUnencryptedCertificates(from: path)
+            + signingFilesLocator.locateUnencryptedPrivateKeys(from: path)
+            + signingFilesLocator.locateUnencryptedAPIKeys(from: path)
     }
 
     private func locateEncryptedSigningFiles(at path: AbsolutePath) throws -> [AbsolutePath] {
-        try signingFilesLocator.locateEncryptedCertificates(from: path) + signingFilesLocator.locateEncryptedPrivateKeys(from: path)
+        try signingFilesLocator.locateEncryptedCertificates(from: path)
+            + signingFilesLocator.locateEncryptedPrivateKeys(from: path)
+            + signingFilesLocator.locateEncryptedAPIKeys(from: path)
     }
 
     /// - Returns: Files that are already correctly encrypted

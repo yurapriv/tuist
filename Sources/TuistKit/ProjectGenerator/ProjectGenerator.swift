@@ -155,6 +155,7 @@ class ProjectGenerator: ProjectGenerating {
     }
 
     private func postGenerationActions(for graph: Graph, workspaceName: String) throws {
+        try signingInteractor.vendor(graph: graph)
         try signingInteractor.install(graph: graph)
         try swiftPackageManagerInteractor.install(graph: graph, workspaceName: workspaceName)
         try cocoapodsInteractor.install(graph: graph)
