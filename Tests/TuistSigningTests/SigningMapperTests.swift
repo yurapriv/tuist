@@ -11,20 +11,17 @@ final class SigningMapperTests: TuistUnitTestCase {
     var subject: SigningMapper!
     var signingFilesLocator: MockSigningFilesLocator!
     var signingMatcher: MockSigningMatcher!
-    var rootDirectoryLocator: MockRootDirectoryLocator!
     var signingCipher: MockSigningCipher!
 
     override func setUp() {
         super.setUp()
         signingFilesLocator = MockSigningFilesLocator()
         signingMatcher = MockSigningMatcher()
-        rootDirectoryLocator = MockRootDirectoryLocator()
         signingCipher = MockSigningCipher()
 
         subject = SigningMapper(
             signingFilesLocator: signingFilesLocator,
             signingMatcher: signingMatcher,
-            rootDirectoryLocator: rootDirectoryLocator,
             signingCipher: signingCipher
         )
     }
@@ -33,7 +30,6 @@ final class SigningMapperTests: TuistUnitTestCase {
         super.tearDown()
         signingFilesLocator = nil
         signingMatcher = nil
-        rootDirectoryLocator = nil
         signingCipher = nil
         subject = nil
     }
@@ -44,10 +40,7 @@ final class SigningMapperTests: TuistUnitTestCase {
         signingFilesLocator.locateSigningDirectoryStub = { _ in
             signingDirectory
         }
-        let rootDirectory = try temporaryPath()
-        let derivedDirectory = rootDirectory.appending(component: Constants.derivedFolderName)
-        let keychainPath = derivedDirectory.appending(component: Constants.signingKeychain)
-        rootDirectoryLocator.locateStub = rootDirectory
+
         let targetName = "target"
         let configuration = "configuration"
         let certificate = Certificate.test(name: "certA")
@@ -58,7 +51,9 @@ final class SigningMapperTests: TuistUnitTestCase {
         )
         signingMatcher.matchStub = { _ in
             (certificates: [
-                configuration: certificate,
+                targetName: [
+                    configuration: certificate,
+                ],
             ],
              provisioningProfiles: [
                  targetName: [
@@ -82,6 +77,13 @@ final class SigningMapperTests: TuistUnitTestCase {
             )
         )
 
+        let project = Project.test(
+            path: try temporaryPath(),
+            targets: [target]
+        )
+        let derivedDirectory = project.path.appending(component: Constants.derivedFolderName)
+        let keychainPath = derivedDirectory.appending(component: Constants.signingKeychain)
+
         let expectedConfigurations: [BuildConfiguration: Configuration] = [
             BuildConfiguration(
                 name: configuration,
@@ -96,73 +98,15 @@ final class SigningMapperTests: TuistUnitTestCase {
             ]),
         ]
 
-        let project = Project.test(targets: [target])
-        let graph = Graph.test(projects: [project])
-
         // When
-        let (mappedGraph, sideEffects) = try subject.map(graph: graph)
+        let (mappedProject, sideEffects) = try subject.map(project: project)
 
         // Then
         XCTAssertEmpty(sideEffects)
-        let configurations = mappedGraph.projects
-            .flatMap { $0.targets }
+        let configurations = mappedProject.targets
             .map { $0.settings }
             .map { $0?.configurations }
 
         XCTAssertEqual(configurations.first, expectedConfigurations)
-    }
-
-    func test_signing_mapping_when_mismatched_app_id() throws {
-        // Given
-        let signingDirectory = try temporaryPath()
-        signingFilesLocator.locateSigningDirectoryStub = { _ in
-            signingDirectory
-        }
-        let rootDirectory = try temporaryPath()
-        rootDirectoryLocator.locateStub = rootDirectory
-        let targetName = "target"
-        let configuration = "configuration"
-        let certificate = Certificate.test(name: "certA")
-        let provisioningProfile = ProvisioningProfile.test(
-            name: "profileA",
-            teamId: "TeamID",
-            appId: "TeamID.MismatchedBundleID"
-        )
-        signingMatcher.matchStub = { _ in
-            (certificates: [
-                configuration: certificate,
-            ],
-             provisioningProfiles: [
-                 targetName: [
-                     configuration: provisioningProfile,
-                 ],
-             ])
-        }
-
-        let target = Target.test(
-            name: targetName,
-            bundleId: "BundleID",
-            settings: Settings(
-                configurations: [
-                    BuildConfiguration(
-                        name: configuration,
-                        variant: .debug
-                    ): Configuration.test(),
-                ]
-            )
-        )
-
-        let project = Project.test(targets: [target])
-        let graph = Graph.test(projects: [project])
-
-        // When
-        XCTAssertThrowsSpecific(
-            try subject.map(graph: graph),
-            SigningMapperError.appIdMismatch(
-                "TeamID.MismatchedBundleID",
-                "TeamID",
-                "BundleID"
-            )
-        )
     }
 }

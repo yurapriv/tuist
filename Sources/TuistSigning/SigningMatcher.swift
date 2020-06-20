@@ -2,13 +2,17 @@ import Foundation
 import TSCBasic
 import TuistCore
 
+typealias TargetName = String
+typealias ConfigurationName = String
+
 /// Matching signing artifacts
 protocol SigningMatching {
     /// - Returns: Certificates and provisioning profiles matched with their configuration and target
     /// - Warning: Expects certificates and provisioning profiles already decrypted
-    func match(graph: Graph) throws ->
-        (certificates: [String: Certificate],
-         provisioningProfiles: [String: [String: ProvisioningProfile]])
+    func match(from path: AbsolutePath) throws -> (
+        certificates: [TargetName: [ConfigurationName: Certificate]],
+        provisioningProfiles: [TargetName: [ConfigurationName: ProvisioningProfile]]
+    )
 }
 
 final class SigningMatcher: SigningMatching {
@@ -24,23 +28,23 @@ final class SigningMatcher: SigningMatching {
         self.certificateParser = certificateParser
     }
 
-    func match(graph: Graph) throws ->
-        (certificates: [String: Certificate],
-         provisioningProfiles: [String: [String: ProvisioningProfile]]) {
-        let entryPath = graph.entryPath
-
-        let certificateFiles = try signingFilesLocator.locateUnencryptedCertificates(from: entryPath)
+    func match(from path: AbsolutePath) throws -> (
+        certificates: [TargetName: [ConfigurationName: Certificate]],
+        provisioningProfiles: [TargetName: [ConfigurationName: ProvisioningProfile]]
+    ) {
+        let certificateFiles = try signingFilesLocator.locateUnencryptedCertificates(from: path)
             .sorted()
-        let privateKeyFiles = try signingFilesLocator.locateUnencryptedPrivateKeys(from: entryPath)
+        let privateKeyFiles = try signingFilesLocator.locateUnencryptedPrivateKeys(from: path)
             .sorted()
-        let certificates = try zip(certificateFiles, privateKeyFiles)
+        let certificates: [TargetName: [ConfigurationName: Certificate]] = try zip(certificateFiles, privateKeyFiles)
             .map(certificateParser.parse)
             .reduce(into: [:]) { dict, certificate in
-                dict[certificate.publicKey.basenameWithoutExt] = certificate
+                var currentTargetDict = dict[certificate.targetName] ?? [:]
+                currentTargetDict[certificate.configurationName] = certificate
+                dict[certificate.targetName] = currentTargetDict
             }
 
-        /// Dictionary of [ProvisioningProfile.targetName: [ProvisioningProfile.configurationName: ProvisioningProfile]]
-        let provisioningProfiles: [String: [String: ProvisioningProfile]] = try signingFilesLocator.locateProvisioningProfiles(from: entryPath)
+        let provisioningProfiles: [TargetName: [ConfigurationName: ProvisioningProfile]] = try signingFilesLocator.locateProvisioningProfiles(from: path)
             .map(provisioningProfileParser.parse)
             .reduce(into: [:]) { dict, profile in
                 var currentTargetDict = dict[profile.targetName] ?? [:]

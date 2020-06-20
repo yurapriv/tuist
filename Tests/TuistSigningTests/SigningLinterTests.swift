@@ -57,4 +57,80 @@ final class SigningLinterTests: TuistUnitTestCase {
         // Then
         XCTAssertEqual(got, expectedIssues)
     }
+
+    func test_lint_when_provisioning_profile_and_app_id_match() {
+        // Given
+        let provisioningProfile = ProvisioningProfile.test(
+            teamId: "team",
+            appId: "team.io.tuist"
+        )
+        let target = Target.test(bundleId: "io.tuist")
+
+        // When
+        let got = subject.lint(provisioningProfile: provisioningProfile, target: target)
+
+        // Then
+        XCTAssertEmpty(got)
+    }
+
+    func test_lint_when_provisioning_profile_and_app_id_mismatch() {
+        // Given
+        let provisioningProfile = ProvisioningProfile.test(
+            teamId: "team",
+            appId: "team.io.not-tuist"
+        )
+        let target = Target.test(bundleId: "io.tuist")
+
+        // When
+        let got = subject.lint(provisioningProfile: provisioningProfile, target: target)
+
+        // Then
+        XCTAssertEqual(
+            got,
+            [LintingIssue(
+                reason: """
+                App id \(provisioningProfile.appId) does not correspond to \(provisioningProfile.teamId).\(target.bundleId). Make sure the provisioning profile has been added to the right target.
+                """,
+                severity: .error
+            )]
+        )
+    }
+
+    func test_lint_when_provisioning_profile_has_wildcard() {
+        // Given
+        let provisioningProfile = ProvisioningProfile.test(
+            teamId: "team",
+            appId: "team.io.*"
+        )
+        let target = Target.test(bundleId: "io.tuist")
+
+        // When
+        let got = subject.lint(provisioningProfile: provisioningProfile, target: target)
+
+        // Then
+        XCTAssertEmpty(got)
+    }
+
+    func test_lint_when_provisioning_profile_has_wildcard_mismatch() {
+        // Given
+        let provisioningProfile = ProvisioningProfile.test(
+            teamId: "team",
+            appId: "team.not-io.*"
+        )
+        let target = Target.test(bundleId: "io.tuist")
+
+        // When
+        let got = subject.lint(provisioningProfile: provisioningProfile, target: target)
+
+        // Then
+        XCTAssertEqual(
+            got,
+            [LintingIssue(
+                reason: """
+                App id \(provisioningProfile.appId) does not correspond to \(provisioningProfile.teamId).\(target.bundleId). Make sure the provisioning profile has been added to the right target.
+                """,
+                severity: .error
+            )]
+        )
+    }
 }

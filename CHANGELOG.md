@@ -4,10 +4,34 @@ Please, check out guidelines: https://keepachangelog.com/en/1.0.0/
 
 ## Next
 
+### Fixed
+
+- Missing schemes in generated project for editing [#1467](https://github.com/tuist/tuist/pull/1467) by [@fortmarek](https://github.com/fortmarek)
+- `tuist build` cleaning even if the `--clean` argument is not passed [#1458](https://github.com/tuist/tuist/pull/1458) by [@pepibumur](https://github.com/pepibumur).
+
+### Changed
+
+- Use `LD_RUNPATH_SEARCH_PATHS` instead of embedding dynamic frameworks for unit test targets [#1463](https://github.com/tuist/tuist/pull/1463) by [@fortmarek](https://github.com/fortmarek)
+
+## 1.11.0 - Volare
+
 ### Added
 
-- Add support for watch architectures [#1417](https://github.com/tuist/tuist/pull/1417) by [@davidbrunow](https://github.com/davidbrunow)
 - Signing feature [#1186](https://github.com/tuist/tuist/pull/1186) by [@fortmarek](https://github.com/fortmarek)
+- Add support for watch architectures [#1417](https://github.com/tuist/tuist/pull/1417) by [@davidbrunow](https://github.com/davidbrunow)
+- Add method to XcodeBuildController to show the build settings of a project [#1422](https://github.com/tuist/tuist/pull/1422) by [@pepibumur](https://github.com/pepibumur)
+- Support for passing the configuration to the `tuist build` command [#1422](https://github.com/tuist/tuist/pull/1442) by [@pepibumur](https://github.com/pepibumur)
+
+### Fixed
+
+- Fix `tuist build` building a wrong workspace [#1427](https://github.com/tuist/tuist/pull/1427) by [@fortmarek](https://github.com/fortmarek)
+- `tuist edit` always creates a project in a new temp dir [#1424](https://github.com/tuist/tuist/pull/1424) by [@fortmarek](https://github.com/fortmarek)
+- Fix `tuist init` and `tuist scaffold` with new ArgumentParser version [#1425](https://github.com/tuist/tuist/pull/1425) by [@fortmarek](https://github.com/fortmarek)
+- `--clean` argument ot the build command [#1421](https://github.com/tuist/tuist/pull/1421) by [@pepibumur](https://github.com/pepibumur)
+
+### Changed
+
+- Extend `CloudInsightsGraphMapper` to support mapping the value graph [#1380](https://github.com/tuist/tuist/pull/1380) by [@pepibumur](https://github.com/pepibumur)
 
 ## 1.10.0 - Alma
 
@@ -18,6 +42,7 @@ Please, check out guidelines: https://keepachangelog.com/en/1.0.0/
 
 ### Changed
 
+- Removed filtering of the environment variables exposed to shell commands [#1416](https://github.com/tuist/tuist/pull/1416) by [@kalkwarf](https://github.com/kalkwarf)
 - Upgrade XcodeProj to 7.11.0 [#1398](https://github.com/tuist/tuist/pull/1398) by [@pepibumur](https://github.com/pepibumur)
 - Move the auto-generation of schemes to a model mapper [#1357](https://github.com/tuist/tuist/pull/1357) by [@pepibumur](https://github.com/pepibumur)
 

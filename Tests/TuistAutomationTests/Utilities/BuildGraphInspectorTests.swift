@@ -26,7 +26,7 @@ final class BuildGraphInspectorTests: TuistUnitTestCase {
         let target = Target.test(platform: .macOS)
 
         // When
-        let got = subject.buildArguments(target: target)
+        let got = subject.buildArguments(target: target, configuration: nil)
 
         // Then
         XCTAssertEqual(got, [
@@ -39,7 +39,7 @@ final class BuildGraphInspectorTests: TuistUnitTestCase {
         let target = Target.test(platform: .iOS)
 
         // When
-        let got = subject.buildArguments(target: target)
+        let got = subject.buildArguments(target: target, configuration: nil)
 
         // Then
         XCTAssertEqual(got, [
@@ -52,7 +52,7 @@ final class BuildGraphInspectorTests: TuistUnitTestCase {
         let target = Target.test(platform: .watchOS)
 
         // When
-        let got = subject.buildArguments(target: target)
+        let got = subject.buildArguments(target: target, configuration: nil)
 
         // Then
         XCTAssertEqual(got, [
@@ -65,12 +65,36 @@ final class BuildGraphInspectorTests: TuistUnitTestCase {
         let target = Target.test(platform: .tvOS)
 
         // When
-        let got = subject.buildArguments(target: target)
+        let got = subject.buildArguments(target: target, configuration: nil)
 
         // Then
         XCTAssertEqual(got, [
             .sdk(Platform.tvOS.xcodeSimulatorSDK!),
         ])
+    }
+
+    func test_buildArguments_when_theGivenConfigurationExists() throws {
+        // Given
+        let settings = Settings.test(base: [:], debug: .test(), release: .test())
+        let target = Target.test(settings: settings)
+
+        // When
+        let got = subject.buildArguments(target: target, configuration: "Release")
+
+        // Then
+        XCTAssertTrue(got.contains(.configuration("Release")))
+    }
+
+    func test_buildArguments_when_theGivenConfigurationDoesntExist() throws {
+        // Given
+        let settings = Settings.test(base: [:], configurations: [:])
+        let target = Target.test(settings: settings)
+
+        // When
+        let got = subject.buildArguments(target: target, configuration: "Release")
+
+        // Then
+        XCTAssertFalse(got.contains(.configuration("Release")))
     }
 
     func test_buildableTarget() throws {
@@ -142,10 +166,40 @@ final class BuildGraphInspectorTests: TuistUnitTestCase {
         // Given
         let path = try temporaryPath()
         let workspacePath = path.appending(component: "App.xcworkspace")
-        try FileHandler.shared.touch(workspacePath)
+        try FileHandler.shared.createFolder(workspacePath)
+        try FileHandler.shared.touch(workspacePath.appending(component: Constants.tuistGeneratedFileName))
 
         // When
-        let got = subject.workspacePath(directory: path)
+        let got = try subject.workspacePath(directory: path)
+
+        // Then
+        XCTAssertEqual(got, workspacePath)
+    }
+
+    func test_workspacePath_when_no_tuist_workspace_is_present() throws {
+        // Given
+        let path = try temporaryPath()
+        let workspacePath = path.appending(component: "App.xcworkspace")
+        try FileHandler.shared.createFolder(workspacePath)
+
+        // When
+        let got = try subject.workspacePath(directory: path)
+
+        // Then
+        XCTAssertNil(got)
+    }
+
+    func test_workspacePath_when_multiple_workspaces_are_present() throws {
+        // Given
+        let path = try temporaryPath()
+        let nonTuistWorkspacePath = path.appending(components: "SPM.xcworkspace")
+        try FileHandler.shared.createFolder(nonTuistWorkspacePath)
+        let workspacePath = path.appending(component: "TuistApp.xcworkspace")
+        try FileHandler.shared.createFolder(workspacePath)
+        try FileHandler.shared.touch(workspacePath.appending(component: Constants.tuistGeneratedFileName))
+
+        // When
+        let got = try subject.workspacePath(directory: path)
 
         // Then
         XCTAssertEqual(got, workspacePath)

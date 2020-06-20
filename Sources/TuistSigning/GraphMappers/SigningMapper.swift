@@ -3,78 +3,54 @@ import TSCBasic
 import TuistCore
 import TuistSupport
 
-enum SigningMapperError: FatalError, Equatable {
-    case appIdMismatch(String, String, String)
-
-    var type: ErrorType {
-        switch self {
-        case .appIdMismatch:
-            return .abort
-        }
-    }
-
-    var description: String {
-        switch self {
-        case let .appIdMismatch(appId, developmentTeamId, bundleId):
-            return "App id \(appId) does not correspond to \(developmentTeamId).\(bundleId). Make sure the provisioning profile has been added to the right target."
-        }
-    }
-}
-
-public class SigningMapper: GraphMapping {
+public class SigningMapper: ProjectMapping {
     private let signingFilesLocator: SigningFilesLocating
-    private let rootDirectoryLocator: RootDirectoryLocating
     private let signingMatcher: SigningMatching
     private let signingCipher: SigningCiphering
 
     public convenience init() {
         self.init(signingFilesLocator: SigningFilesLocator(),
                   signingMatcher: SigningMatcher(),
-                  rootDirectoryLocator: RootDirectoryLocator(),
                   signingCipher: SigningCipher())
     }
 
     init(signingFilesLocator: SigningFilesLocating,
          signingMatcher: SigningMatching,
-         rootDirectoryLocator: RootDirectoryLocating,
          signingCipher: SigningCiphering) {
         self.signingFilesLocator = signingFilesLocator
         self.signingMatcher = signingMatcher
-        self.rootDirectoryLocator = rootDirectoryLocator
         self.signingCipher = signingCipher
     }
 
     // MARK: - GraphMapping
 
-    public func map(graph: Graph) throws -> (Graph, [SideEffectDescriptor]) {
-        let entryPath = graph.entryPath
+    public func map(project: Project) throws -> (Project, [SideEffectDescriptor]) {
+        var project = project
+        let path = project.path
         guard
-            try signingFilesLocator.locateSigningDirectory(from: entryPath) != nil,
-            let derivedDirectory = rootDirectoryLocator.locate(from: entryPath)?.appending(component: Constants.derivedFolderName)
+            try signingFilesLocator.locateSigningDirectory(from: path) != nil
         else {
             logger.debug("No signing artifacts found")
-            return (graph, [])
+            return (project, [])
         }
 
-        try signingCipher.decryptSigning(at: entryPath, keepFiles: true)
-        defer { try? signingCipher.encryptSigning(at: entryPath, keepFiles: false) }
+        try signingCipher.decryptSigning(at: path, keepFiles: true)
+        defer { try? signingCipher.encryptSigning(at: path, keepFiles: false) }
 
+        let derivedDirectory = project.path.appending(component: Constants.derivedFolderName)
         let keychainPath = derivedDirectory.appending(component: Constants.signingKeychain)
 
-        let (certificates, provisioningProfiles) = try signingMatcher.match(graph: graph)
+        let (certificates, provisioningProfiles) = try signingMatcher.match(from: project.path)
 
-        let projects: [Project] = try graph.projects.map { project in
-            let targets = try project.targets.map {
-                try map(target: $0,
-                        project: project,
-                        keychainPath: keychainPath,
-                        certificates: certificates,
-                        provisioningProfiles: provisioningProfiles)
-            }
-            return project.with(targets: targets)
+        project.targets = try project.targets.map {
+            try map(target: $0,
+                    project: project,
+                    keychainPath: keychainPath,
+                    certificates: certificates,
+                    provisioningProfiles: provisioningProfiles)
         }
 
-        return (graph.with(projects: projects), [])
+        return (project, [])
     }
 
     // MARK: - Helpers
@@ -82,28 +58,20 @@ public class SigningMapper: GraphMapping {
     private func map(target: Target,
                      project: Project,
                      keychainPath: AbsolutePath,
-                     certificates: [String: Certificate],
-                     provisioningProfiles: [String: [String: ProvisioningProfile]]) throws -> Target {
+                     certificates: [TargetName: [ConfigurationName: Certificate]],
+                     provisioningProfiles: [TargetName: [ConfigurationName: ProvisioningProfile]]) throws -> Target {
+        var target = target
         let targetConfigurations = target.settings?.configurations ?? [:]
-        let configurations: [BuildConfiguration: Configuration?] = try targetConfigurations
+        let configurations: [BuildConfiguration: Configuration?] = targetConfigurations
             .merging(project.settings.configurations,
                      uniquingKeysWith: { config, _ in config })
             .reduce(into: [:]) { dict, configurationPair in
                 guard
                     let provisioningProfile = provisioningProfiles[target.name]?[configurationPair.key.name],
-                    let certificate = certificates[configurationPair.key.name.lowercased()]
+                    let certificate = certificates[target.name]?[configurationPair.key.name]
                 else {
                     dict[configurationPair.key] = configurationPair.value
                     return
-                }
-                guard
-                    provisioningProfile.appId == provisioningProfile.teamId + "." + target.bundleId
-                else {
-                    throw SigningMapperError.appIdMismatch(
-                        provisioningProfile.appId,
-                        provisioningProfile.teamId,
-                        target.bundleId
-                    )
                 }
                 let configuration = configurationPair.value ?? Configuration()
                 var settings = configuration.settings
@@ -115,8 +83,11 @@ public class SigningMapper: GraphMapping {
                 dict[configurationPair.key] = configuration.with(settings: settings)
             }
 
-        return target.with(settings: Settings(base: target.settings?.base ?? [:],
-                                              configurations: configurations,
-                                              defaultSettings: target.settings?.defaultSettings ?? .recommended))
+        target.settings = Settings(
+            base: target.settings?.base ?? [:],
+            configurations: configurations,
+            defaultSettings: target.settings?.defaultSettings ?? .recommended
+        )
+        return target
     }
 }

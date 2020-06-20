@@ -22,18 +22,63 @@ module.exports = {
     ],
   },
   plugins: [
+    {
+      resolve: `gatsby-theme-tailwindcss`,
+      options: {
+        postCssPlugins: [require('autoprefixer')],
+      },
+    },
+    `gatsby-plugin-react-helmet`,
+    {
+      resolve: 'gatsby-plugin-next-seo',
+      options: {
+        titleTemplate: '%s | Tuist',
+        openGraph: {
+          type: 'website',
+          title: title,
+          locale: 'en_IE',
+          url: siteUrl,
+          site_name: title,
+          images: [
+            {
+              url: `${siteUrl}/squared-logo.png`,
+              width: 400,
+              height: 400,
+              alt: "Tuist's logo",
+            },
+          ],
+          keywords: [
+            `tuist`,
+            `engineering`,
+            `xcode`,
+            `swift`,
+            `project generation`,
+            `xcode project generation`,
+            `xcodeproj`,
+            `xcodegen`,
+            'ios',
+            'uikit',
+            'foundation',
+            'tvos',
+            'ios',
+            'watchos',
+            'objective-c',
+            'swift package manager',
+            'swift packages',
+          ],
+        },
+        twitter: {
+          site: '@tuistio',
+          handle: '@tuistio',
+          cardType: 'summary',
+        },
+      },
+    },
     `gatsby-plugin-sharp`,
     `gatsby-plugin-sitemap`,
     `gatsby-plugin-offline`,
     `gatsby-plugin-theme-ui`,
     `gatsby-transformer-yaml`,
-    `gatsby-plugin-react-helmet`,
-    {
-      resolve: `gatsby-plugin-google-analytics`,
-      options: {
-        trackingId: 'UA-125584790-1',
-      },
-    },
     {
       resolve: `gatsby-source-filesystem`,
       name: 'data',
@@ -66,37 +111,6 @@ module.exports = {
         theme_color: `#12344F`,
         display: `minimal-ui`,
         icon: `static/favicon.png`, // This path is relative to the root of the site.
-      },
-    },
-    {
-      resolve: `gatsby-plugin-favicon`,
-      options: {
-        logo: './static/favicon.png',
-        appName: 'Tuist',
-        appDescription:
-          'Bootstrap, maintain, and interact with Xcode projects at any scale',
-        developerName: 'Pedro Piñera',
-        developerURL: 'https://ppinera.es',
-        dir: 'auto',
-        lang: 'en-US',
-        background: '#12344F',
-        theme_color: '#12344F',
-        display: 'standalone',
-        orientation: 'any',
-        version: '1.0',
-        start_url: '/',
-        icons: {
-          android: true,
-          appleIcon: true,
-          appleStartup: true,
-          coast: false,
-          favicons: true,
-          firefox: true,
-          opengraph: false,
-          twitter: true,
-          yandex: false,
-          windows: false,
-        },
       },
     },
     {
@@ -200,57 +214,23 @@ module.exports = {
         generateMatchPathRewrites: true, // boolean to turn off automatic creation of redirect rules for client only paths
       },
     },
-    {
-      resolve: 'gatsby-plugin-next-seo',
-      options: {
-        titleTemplate: '%s | Tuist',
-        openGraph: {
-          type: 'website',
-          title: title,
-          locale: 'en_IE',
-          url: siteUrl,
-          site_name: title,
-          images: [
-            {
-              url: `${siteUrl}/squared-logo.png`,
-              width: 400,
-              height: 400,
-              alt: "Tuist's logo",
-            },
-          ],
-          keywords: [
-            `tuist`,
-            `engineering`,
-            `xcode`,
-            `swift`,
-            `project generation`,
-            `xcode project generation`,
-            `xcodeproj`,
-            `xcodegen`,
-            'ios',
-            'uikit',
-            'foundation',
-            'tvos',
-            'ios',
-            'watchos',
-            'objective-c',
-            'swift package manager',
-            'swift packages',
-          ],
-        },
-        twitter: {
-          site: '@tuistio',
-          handle: '@tuistio',
-          cardType: 'summary',
-        },
-      },
-    },
     'gatsby-plugin-meta-redirect',
     `gatsby-plugin-robots-txt`,
     {
-      resolve: `gatsby-theme-tailwindcss`,
+      resolve: `gatsby-plugin-google-analytics`,
       options: {
-        postCssPlugins: [require('autoprefixer')],
+        trackingId: 'UA-125584790-1',
+      },
+    },
+    {
+      resolve: `gatsby-plugin-purgecss`,
+      options: {
+        printRejected: true, // Print removed selectors and processed file names
+        // develop: true, // Enable while using `gatsby develop`
+        tailwind: true, // Enable tailwindcss support
+        // whitelist: ['whitelist'], // Don't remove this selector
+        // ignore: ['/ignored.css', 'prismjs/', 'docsearch.js/'], // Ignore files/folders
+        // purgeOnly : ['components/', '/main.css', 'bootstrap/'], // Purge only these files/folders
       },
     },
   ],
