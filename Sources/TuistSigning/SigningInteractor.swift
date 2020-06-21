@@ -4,6 +4,11 @@ import TSCBasic
 import TuistCore
 import TuistSupport
 
+enum SigningType {
+    case development
+    case distribution
+}
+
 /// Interacts with signing
 public protocol SigningInteracting {
     /// Install signing for a given graph
@@ -15,7 +20,11 @@ public protocol SigningInteracting {
 public final class SigningInteractor: SigningInteracting {
     /// Dictionary of remote provisioning profiles where key is the team id
     private static var remoteProvisioningProfiles: [String: [RemoteProvisioningProfile]] = [:]
-
+    /// Dictionary of devices where key is the team id and value id of a device
+    private static var devices: [String: [String]] = [:]
+    /// Dictionary of certificates where key is the teaam id
+    private static var certificates: [String: [RemoteCertificate]] = [:]
+    
     private let signingFilesLocator: SigningFilesLocating
     private let rootDirectoryLocator: RootDirectoryLocating
     private let signingMatcher: SigningMatching
@@ -84,16 +93,23 @@ public final class SigningInteractor: SigningInteracting {
                     let signingConfiguration: String
                     // TODO: Use to only download profiles with this team id (using conventional name for API key)
                     let signingTeamId: String
+                    let signingType: SigningType
                     switch signing {
-                    case let .development(teamId: teamId, configuration: configuration),
-                         let .distribution(teamId: teamId, configuration: configuration):
+                    case let .development(teamId: teamId, configuration: configuration):
                         signingConfiguration = configuration
                         signingTeamId = teamId
+                        signingType = .development
+                    case let .distribution(teamId: teamId, configuration: configuration):
+                        signingConfiguration = configuration
+                        signingTeamId = teamId
+                        signingType = .distribution
                     }
                     // TODO: Check if certificate is valid, too
                     if let provisioningProfile = provisioningProfiles[target.name]?[signingConfiguration] {
-                        guard provisioningProfile.expirationDate > Date() else { return }
-                        logger.debug("Skipping generating provisioning profile \(provisioningProfile.name) is valid.")
+                        guard provisioningProfile.expirationDate < Date() else {
+                            logger.debug("Skipping generating provisioning profile \(provisioningProfile.name) is valid.")
+                            return
+                        }
                     }
 
                     guard let apiKeyPath = apiKeys.first(where: { $0.basename.hasPrefix(signingTeamId) }) else {
@@ -105,10 +121,30 @@ public final class SigningInteractor: SigningInteracting {
                     guard
                         try !remoteProvisioningProfiles(for: apiKey).contains(where: { $0.name == "\(target.name).\(signingConfiguration)" })
                     else { return }
+                    
+                    let deviceIds = try self.deviceIds(for: apiKey)
+                    if let certificate = certificates[target.name]?[signingConfiguration] {
+                        guard certificate.isRevoked else { return }
+                    }
+                    
+                    let remoteCertificate: RemoteCertificate? = try self.certificates(for: apiKey).first(where: { certificate in
+                        switch certificate.type {
+                        case .development:
+                            return signingType == .development
+                        case .distribution:
+                            return signingType == .distribution
+                        }
+                    })
+                    
+                    if let remoteCertificate = remoteCertificate {
+                        
+                    } else {
+                        
+                    }
                 }
         }
     }
-
+    
     public func install(graph: Graph) throws {
         let entryPath = graph.entryPath
         guard
@@ -155,6 +191,34 @@ public final class SigningInteractor: SigningInteracting {
                 .single()
             SigningInteractor.remoteProvisioningProfiles[apiKey.teamId] = remoteProvisioningProfiles
             return remoteProvisioningProfiles
+        }
+    }
+    
+    private func deviceIds(for apiKey: APIKey) throws -> [String] {
+        if let devices = SigningInteractor.devices[apiKey.teamId] {
+            return devices
+        } else {
+            let devices = try appStoreConnectController
+                .deviceIds(for: apiKey)
+                .asSingle()
+                .toBlocking()
+                .single()
+            SigningInteractor.devices[apiKey.teamId] = devices
+            return devices
+        }
+    }
+    
+    private func certificates(for apiKey: APIKey) throws -> [RemoteCertificate] {
+        if let certificates = SigningInteractor.certificates[apiKey.teamId] {
+            return certificates
+        } else {
+            let certificates = try appStoreConnectController
+                .certificates(for: apiKey)
+                .asSingle()
+                .toBlocking()
+                .single()
+            SigningInteractor.certificates[apiKey.teamId] = certificates
+            return certificates
         }
     }
 

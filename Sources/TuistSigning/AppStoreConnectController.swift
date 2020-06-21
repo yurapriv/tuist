@@ -23,14 +23,54 @@ extension RemoteProvisioningProfile {
     }
 }
 
+struct RemoteCertificate {
+    enum CertificateType {
+        case development
+        case distribution
+    }
+    
+    let id: String
+    let type: CertificateType
+}
+
+extension RemoteCertificate {
+    init?(_ certificate: AppStoreConnect_Swift_SDK.Certificate) {
+        id = certificate.id
+        guard let certificateType = certificate.attributes.certificateType else { return nil }
+        switch certificateType {
+        case .development:
+            type = .development
+        case .distribution:
+            type = .distribution
+        default:
+            fatalError()
+        }
+    }
+}
+
 protocol AppStoreConnectControlling {
     func provisioningProfiles(for apiKey: APIKey) -> Observable<[RemoteProvisioningProfile]>
+    func deviceIds(for apiKey: APIKey) -> Observable<[String]>
+    func certificates(for apiKey: APIKey) -> Observable<[RemoteCertificate]>
 }
 
 final class AppStoreConnectController: AppStoreConnectControlling {
     func provisioningProfiles(for apiKey: APIKey) -> Observable<[RemoteProvisioningProfile]> {
         let provider = APIProvider(apiKey)
-        return provider.request(.listProfiles()).map { $0.data.compactMap(RemoteProvisioningProfile.init) }
+        return provider.request(.listProfiles())
+            .map { $0.data.compactMap(RemoteProvisioningProfile.init) }
+    }
+    
+    func deviceIds(for apiKey: APIKey) -> Observable<[String]> {
+        let provider = APIProvider(apiKey)
+        return provider.request(.listDevices())
+            .map { $0.data.map(\.id) } 
+    }
+    
+    func certificates(for apiKey: APIKey) -> Observable<[RemoteCertificate]> {
+        let provider = APIProvider(apiKey)
+        return provider.request(.listDownloadCertificates())
+            .map { $0.data.compactMap(RemoteCertificate.init) }
     }
 }
 
