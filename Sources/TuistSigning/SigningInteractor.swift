@@ -22,8 +22,10 @@ public final class SigningInteractor: SigningInteracting {
     private static var remoteProvisioningProfiles: [String: [RemoteProvisioningProfile]] = [:]
     /// Dictionary of devices where key is the team id and value id of a device
     private static var devices: [String: [String]] = [:]
-    /// Dictionary of certificates where key is the teaam id
+    /// Dictionary of certificates where key is the team id
     private static var certificates: [String: [RemoteCertificate]] = [:]
+    /// Dictionary of bundle ids where key is the team id
+    private static var bundleIds: [String: [RemoteBundleId]] = [:]
     
     private let signingFilesLocator: SigningFilesLocating
     private let rootDirectoryLocator: RootDirectoryLocating
@@ -80,7 +82,7 @@ public final class SigningInteractor: SigningInteracting {
         try signingCipher.decryptSigning(at: entryPath, keepFiles: true)
         defer { try? signingCipher.encryptSigning(at: entryPath, keepFiles: false) }
 
-        let (certificates, provisioningProfiles) = try signingMatcher.match(from: graph.entryPath)
+        var (certificates, provisioningProfiles) = try signingMatcher.match(from: graph.entryPath)
 
         let apiKeys = Set(try signingFilesLocator.locateUnencryptedAPIKeys(from: entryPath))
 
@@ -123,24 +125,33 @@ public final class SigningInteractor: SigningInteracting {
                     else { return }
                     
                     let deviceIds = try self.deviceIds(for: apiKey)
-                    if let certificate = certificates[target.name]?[signingConfiguration] {
-                        guard certificate.isRevoked else { return }
-                    }
                     
-                    let remoteCertificate: RemoteCertificate? = try self.certificates(for: apiKey).first(where: { certificate in
-                        switch certificate.type {
-                        case .development:
-                            return signingType == .development
-                        case .distribution:
-                            return signingType == .distribution
-                        }
-                    })
+                    let (mappedCertificates, certificate) = try map(
+                        certificates,
+                        targetName: target.name,
+                        configurationName: signingConfiguration
+                    )
+                    certificates = mappedCertificates
                     
-                    if let remoteCertificate = remoteCertificate {
-                        
-                    } else {
-                        
-                    }
+                    let certs = try self.certificates(for: apiKey)
+                    
+                    // TODO: Create bundle id if it does not exist
+                    guard let bundleId = try bundleIds(for: apiKey).first(where: { $0.bundleId == target.bundleId }) else { return }
+                    
+                    let remoteProvisioningProfile = try appStoreConnectController.createProvisioningProfile(
+                        for: apiKey,
+                        id: bundleId.id,
+                        name: "\(target.name).\(signingConfiguration)",
+                        type: signingType,
+                        certificateIds: ["9YNABA4MR3"],
+                        deviceIds: deviceIds
+                    )
+                        .asSingle()
+                        .toBlocking()
+                        .single()
+                    
+                    
+                    print(remoteProvisioningProfile)
                 }
         }
     }
@@ -179,6 +190,28 @@ public final class SigningInteractor: SigningInteracting {
     }
 
     // MARK: - Helpers
+    
+    private func map(
+        _ certificates: [String: [String: Certificate]],
+        targetName: String,
+        configurationName: String
+        ) throws -> ([String: [String: Certificate]], Certificate) {
+        if let certificate = certificates[targetName]?[configurationName],
+            !certificate.isRevoked {
+            return (certificates, certificate)
+        } else {
+//            let remoteCertificate: RemoteCertificate? = try self.certificates(for: apiKey).first(where: { certificate in
+//                switch certificate.type {
+//                case .development:
+//                    return signingType == .development
+//                case .distribution:
+//                    return signingType == .distribution
+//                }
+//            })
+            // TODO: Generate certificate and add it to dictionary
+            fatalError()
+        }
+    }
 
     private func remoteProvisioningProfiles(for apiKey: APIKey) throws -> [RemoteProvisioningProfile] {
         if let remoteProvisioningProfiles = SigningInteractor.remoteProvisioningProfiles[apiKey.teamId] {
@@ -219,6 +252,20 @@ public final class SigningInteractor: SigningInteracting {
                 .single()
             SigningInteractor.certificates[apiKey.teamId] = certificates
             return certificates
+        }
+    }
+    
+    private func bundleIds(for apiKey: APIKey) throws -> [RemoteBundleId] {
+        if let bundleIds = SigningInteractor.bundleIds[apiKey.teamId] {
+            return bundleIds
+        } else {
+            let bundleIds = try appStoreConnectController
+                .bundleIds(for: apiKey)
+                .asSingle()
+                .toBlocking()
+                .single()
+            SigningInteractor.bundleIds[apiKey.teamId] = bundleIds
+            return bundleIds
         }
     }
 

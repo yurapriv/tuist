@@ -2,6 +2,19 @@ import AppStoreConnect_Swift_SDK
 import Foundation
 import RxSwift
 
+struct RemoteBundleId {
+    let id: String
+    let bundleId: String
+}
+
+extension RemoteBundleId {
+    init?(_ bundleId: BundleId) {
+        id = bundleId.id
+        guard let identifier = bundleId.attributes?.identifier else { return nil }
+        self.bundleId = identifier
+    }
+}
+
 struct RemoteProvisioningProfile {
     let name: String
     let profileContent: String
@@ -50,9 +63,19 @@ extension RemoteCertificate {
 
 protocol AppStoreConnectControlling {
     func provisioningProfiles(for apiKey: APIKey) -> Observable<[RemoteProvisioningProfile]>
+    func createProvisioningProfile(
+        for apiKey: APIKey,
+        id: String,
+        name: String,
+        type: SigningType,
+        certificateIds: [String],
+        deviceIds: [String]
+    ) -> Observable<RemoteProvisioningProfile>
     func deviceIds(for apiKey: APIKey) -> Observable<[String]>
     func certificates(for apiKey: APIKey) -> Observable<[RemoteCertificate]>
+    func bundleIds(for apiKey: APIKey) -> Observable<[RemoteBundleId]>
 }
+
 
 final class AppStoreConnectController: AppStoreConnectControlling {
     func provisioningProfiles(for apiKey: APIKey) -> Observable<[RemoteProvisioningProfile]> {
@@ -61,16 +84,51 @@ final class AppStoreConnectController: AppStoreConnectControlling {
             .map { $0.data.compactMap(RemoteProvisioningProfile.init) }
     }
     
+    func createProvisioningProfile(
+        for apiKey: APIKey,
+        id: String,
+        name: String,
+        type: SigningType,
+        certificateIds: [String],
+        deviceIds: [String]
+    ) -> Observable<RemoteProvisioningProfile> {
+        let provider = APIProvider(apiKey)
+        let profileType: ProfileType
+        switch type {
+        case .development:
+            profileType = .iOSAppDevelopment
+        case .distribution:
+            profileType = .iOSAppStore
+        }
+        return provider.request(
+            .create(
+                profileWithId: id,
+                name: name,
+                profileType: profileType,
+                certificateIds: certificateIds,
+                deviceIds: deviceIds
+            )
+        )
+            .map(\.data)
+            .compactMap(RemoteProvisioningProfile.init)
+    }
+    
     func deviceIds(for apiKey: APIKey) -> Observable<[String]> {
         let provider = APIProvider(apiKey)
         return provider.request(.listDevices())
-            .map { $0.data.map(\.id) } 
+            .map { $0.data.map(\.id) }
     }
     
     func certificates(for apiKey: APIKey) -> Observable<[RemoteCertificate]> {
         let provider = APIProvider(apiKey)
         return provider.request(.listDownloadCertificates())
             .map { $0.data.compactMap(RemoteCertificate.init) }
+    }
+    
+    func bundleIds(for apiKey: APIKey) -> Observable<[RemoteBundleId]> {
+        let provider = APIProvider(apiKey)
+        return provider.request(.listBundleIds())
+            .map { $0.data.compactMap(RemoteBundleId.init) }
     }
 }
 

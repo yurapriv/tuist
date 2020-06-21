@@ -3,13 +3,14 @@ import TSCBasic
 import TuistSupport
 
 enum CertificateParserError: FatalError, Equatable {
+    case idParsingFailed(AbsolutePath, String)
     case nameParsingFailed(AbsolutePath, String)
     case developmentTeamParsingFailed(AbsolutePath, String)
     case invalidFormat(String)
 
     var type: ErrorType {
         switch self {
-        case .nameParsingFailed, .developmentTeamParsingFailed, .invalidFormat:
+        case .nameParsingFailed, .developmentTeamParsingFailed, .invalidFormat, .idParsingFailed:
             return .abort
         }
     }
@@ -20,6 +21,8 @@ enum CertificateParserError: FatalError, Equatable {
             return "Certificate \(certificate) is in invalid format. Please name your certificates in the following way: Target.Configuration.p12"
         case let .nameParsingFailed(path, input):
             return "We couldn't parse the name while parsing the following output from the file \(path.pathString): \(input)"
+        case let .idParsingFailed(path, input):
+            return "We coulldn't parse the UID while parsing the following output from the file: \(path.pathString): \(input)"
         case let .developmentTeamParsingFailed(path, input):
             return "We couldn't parse the development team while parsing the following output from the file \(path.pathString): \(input)"
         }
@@ -55,6 +58,15 @@ final class CertificateParser: CertificateParsing {
 
         let subject = try self.subject(at: publicKey)
         let isRevoked = subject.contains("REVOKED")
+        
+        let idRegex = try NSRegularExpression(
+            pattern: SubjectAttribute.uid.rawValue + " *= *([^/,]+)",
+            options: []
+        )
+        guard
+            let idResult = idRegex.firstMatch(in: subject, options: [], range: NSRange(location: 0, length: subject.count))
+        else { throw CertificateParserError.nameParsingFailed(publicKey, subject) }
+        let id = NSString(string: subject).substring(with: idResult.range(at: 1)).spm_chomp()
 
         let nameRegex = try NSRegularExpression(
             pattern: SubjectAttribute.commonName.rawValue + " *= *([^/,]+)",
@@ -77,6 +89,7 @@ final class CertificateParser: CertificateParsing {
         return Certificate(
             publicKey: publicKey,
             privateKey: privateKey,
+            id: id,
             developmentTeam: developmentTeam,
             name: name,
             targetName: targetName,
