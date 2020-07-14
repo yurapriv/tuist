@@ -1,0 +1,88 @@
+---
+title: '#6 Roberto Garrido - '
+categories:
+  [
+    Tuist,
+    roberto garrido,
+    edcast,
+    app development at scale,
+    xcodeproj,
+    xcode,
+    swift,
+    xcode project generation,
+  ]
+excerpt: 'xxx'
+header_image: 'https://pbs.twimg.com/profile_banners/17843271/1441455082/1500x500'
+interviewee_name: 'Roberto Garrido'
+interviewee_twitter_handle: 'che1404'
+interviewee_avatar: https://pbs.twimg.com/profile_images/1270008508998696962/F398CQOx_400x400.jpg
+community_topic: https://community.tuist.io/t/franzs-interview/92
+---
+
+## About the interviewee
+
+### Tell us more about yourself and the project you work on
+
+I’m a freelance iOS developer. Although I’ve worked in multiple projects and teams in the past, during the last 2 years I’ve dedicated most of my time to [Edcast](https://www.edcast.com/), a knowledge sharing platform, based in US.
+
+## Team structure
+
+### How many engineers work on features and how many take care of the infrastructure of your projects?
+
+Edcast has multiple teams adding value to the product. There’s a mobile team, with Android, iOS, Web, Design and QA divisions. Of course, like any other company, there are also non-engineer teams, like marketing and sales.
+In the iOS team we 8 engineers, including the team lead. All of us work on new features, issues, and regressions. Our lead developer makes all the infrastructure decisions based on our inputs and feedbacks, and picks the right technology stack for the task in hand. Also, one of the folks is in charge of bitrise, fastlane and build generation and distribution for the QA team and for release.
+
+## Project and code architecture
+
+### What are the main challenges on your architecture when scaling?
+
+In terms of code, we follow [MVVM](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel) to organize the UI code, coordinator pattern for the navigation, and we extensively use [ReactiveCocoa/ReactiveSwift](https://github.com/ReactiveCocoa/ReactiveSwift).
+MVVM helps us building simple components that we can reuse across the app. Coordinator helps us decoupling the navigation code from the view layer, allowing us to make our modules much more reusable, and context-aware. Finally, ReactiveCocoa/ReactiveSwift allows us binding the ViewModel to the View layer, avoiding all the “delegate dance”, and also seems to be the right fit when it comes to deal with multiple async operations. Moreover, it allows us binding the ViewModel to [CoreData](https://developer.apple.com/documentation/coredata) changes, so all our modules are refreshed when the persistence layer gets updated in any part of the app.
+
+Regarding our workspace, we have the main app project acting as a template, with multiple targets for our clients. There's also a shared library holding the persistence and networking layer.
+As of today, we hold 3 targets per client: the app itself, share, and today (and more features to come!). Since we have 22 clients, you can imagine how challenging this can be.
+Adding a single file to the project requires us to select all the targets in the target picker. If you forgot to add one, or a new target was created while you were working on a feature, most likely the build will fail in CI.
+Moreover, when multiple folks are working on the same set of files or folders, chances are that the project file will have conflicts in merge time.
+There is this fear to manipulate too much the project folder structure, because of possible merge conflict issues. I’m sure our folders would be much more organized if we weren’t afraid to these annoying conflicts. Finally, when adding a Carthage dependency to the app project, we need to update the build phases for every app target. It's not cool.
+
+## Dependencies
+
+### What’s your take on external dependencies?
+
+As many teams out there, we manage our dependencies using the main open source tools available today: [Cocoapods](https://cocoapods.org) and [Carthage](https://github.com/carthage/carthage).
+The shared library only uses Cocoapods, but the app project uses both Cocoapods and Carthage. We don’t use [Swift Package Manager](https://swift.org/package-manager/) yet.
+
+We think dependencies are necessary for speeding up the development process, so we can get faster results. But I have to admit that they introduce complexities to the project’s architecture. For that reason **I’d recommend choosing them wisely**. I have the feeling that sometimes we, as developers, add dependencies just because we need a very simple feature that we could develop ourselves.
+
+Also, it would be great if we had only one dependency manager, but due to lack of Apple's support for this until recent days, we need to choose between, or even worse, choose all the available managers. And that makes our projects unnecessarily more complex.
+
+## Tooling
+
+### What are some challenges you are facing scaling up your project?
+
+As mentioned before, our app project has **22 targets**, along with their respective 2 (and more to come) extensions. This makes the process of adding files and adding carthage dependencies very complex and error prone. We would love Apple to make things easier.
+
+## Build times
+
+### What’s your cold start build time, and what are your plans to improve it?
+
+Our build time is 24 minutes, and although we know there is much room for improvements, there are no plans for doing it at the moment.
+
+## Tuist
+
+### Do you use project description helpers? If so, how? Would you mind adding a code snippet that illustrates your usage.
+
+Tuist is a great tool. It somehow reminds me of CMake and my old days as C++ programmer. This is the tool I have been missing since my first days as iOS developer.
+Project generation is the feature I like the most. It gives you the ability to stop thinking of merge conflicts, and start thinking of what’s more important: your code, and its reusability. Imagine you can just drag a module from the app target to a shared library in your workspace without having to worry about targets, projects, and build phases ❤️
+We are considering adopting Tuist because based on my own experience, it'll help us overcome some of the challenges we are facing.
+
+## Other
+
+### If you started the project again, what would you do differently?
+
+If I started this project (or any other) again, I'd think more in terms of scale. I admit that, when I start developing an app, I normally don’t think that it will grow enough to consider adding shared frameworks, or multiple targets. Further, in spite of Xcode being a great programming IDE, it makes moving files around projects and targets very hard. In a way, this makes you postpone these code structuring decisions for a later stage.
+Using a tool like tuist, makes all these decisions easier to make, so you can focus on what really matters: your code.
+
+## What are you the most excited about from WWDC?
+
+I’m really excited about SwiftUI advances. In terms of UI development, SwiftUI is a game changer. You can build the UI in a declarative way, iterating over it a lot faster thanks to previews. Moreover, thanks to Combine and the binding techniques, you can now think of single source of truth to represent the UI state, reducing the chances of introducing bugs derived from async code to a minimum. Besides, refactoring pieces of UI to new Views is cheap and fast. That being said, I think Apple is encouraging the community to using other ways of organizing the UI other than MVC, like MVVM and reactive code.
