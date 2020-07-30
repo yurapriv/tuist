@@ -9,7 +9,8 @@ class ListService {
     private let templateLoader: TemplateLoading
 
     init(templatesDirectoryLocator: TemplatesDirectoryLocating = TemplatesDirectoryLocator(),
-         templateLoader: TemplateLoading = TemplateLoader()) {
+         templateLoader: TemplateLoading = TemplateLoader())
+    {
         self.templatesDirectoryLocator = templatesDirectoryLocator
         self.templateLoader = templateLoader
     }
