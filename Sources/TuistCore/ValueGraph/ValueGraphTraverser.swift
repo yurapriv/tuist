@@ -3,6 +3,7 @@ import TSCBasic
 import TuistSupport
 
 public class ValueGraphTraverser: GraphTraversing {
+    
     private let graph: ValueGraph
 
     public required init(graph: ValueGraph) {
@@ -144,5 +145,55 @@ public class ValueGraphTraverser: GraphTraversing {
         }
 
         return references
+    }
+    
+    public func linkableDependencies(path: AbsolutePath, name: String) -> [GraphDependencyReference] {
+        //TODO
+        return []
+    }
+    
+    public func librariesPublicHeadersFolders(path: AbsolutePath, name: String) -> [AbsolutePath] {
+        //TODO
+        return []
+    }
+    
+    public func librariesSearchPaths(path: AbsolutePath, name: String) -> [AbsolutePath] {
+        //TODO
+        return []
+    }
+    
+    public func librariesSwiftIncludePaths(path: AbsolutePath, name: String) -> [AbsolutePath] {
+        //TODO
+        return []
+    }
+    
+    public func runPathSearchPaths(path: AbsolutePath, name: String) -> [AbsolutePath] {
+        //TODO
+        return []
+    }
+    
+    public func embeddableFrameworks(path: AbsolutePath, name: String) -> [GraphDependencyReference] {
+        //TODO
+        return []
+    }
+    
+    public func copyProductDependencies(path: AbsolutePath, target: Target) -> [GraphDependencyReference] {
+        //TODO
+        return []
+    }
+    
+    public func allDependencyReferences(for project: Project) -> [GraphDependencyReference] {
+        //TODO
+        return []
+    }
+    
+    public func staticTargets(path: AbsolutePath, name: String) -> Set<Target> {
+        //TODO
+        return Set()
+    }
+    
+    public func hostTarget(path: AbsolutePath, name: String) -> Target? {
+        //TODO
+        return nil
     }
 }

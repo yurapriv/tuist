@@ -326,7 +326,7 @@ public class Graph: Encodable, Equatable {
     /// - Parameters:
     ///   - path: Path to the directory where the project that defines the target is located.
     ///   - name: Name of the target.
-    public func embeddableFrameworks(path: AbsolutePath, name: String) throws -> [GraphDependencyReference] {
+    public func embeddableFrameworks(path: AbsolutePath, name: String) -> [GraphDependencyReference] {
         guard let targetNode = findTargetNode(path: path, name: name),
             canEmbedProducts(targetNode: targetNode)
         else {
@@ -355,7 +355,7 @@ public class Graph: Encodable, Equatable {
         // Exclude any products embed in unit test host apps
         if targetNode.target.product == .unitTests {
             if let hostApp = hostApplication(for: targetNode) {
-                references.subtract(try embeddableFrameworks(path: hostApp.path, name: hostApp.name))
+                references.subtract(embeddableFrameworks(path: hostApp.path, name: hostApp.name))
             } else {
                 references.subtract(precompiledFrameworks)
             }
@@ -385,13 +385,13 @@ public class Graph: Encodable, Equatable {
     /// For the given project it returns all its expected dependency references.
     /// This method is useful to know which references should be added to the products directory in the generated project.
     /// - Parameter project: Project whose dependency references will be returned.
-    public func allDependencyReferences(for project: Project) throws -> [GraphDependencyReference] {
-        let linkableDependencies = try project.targets.flatMap {
+    public func allDependencyReferences(for project: Project) -> [GraphDependencyReference] {
+        let linkableDependencies = project.targets.flatMap {
             self.linkableDependencies(path: project.path, name: $0.name)
         }
 
-        let embeddableDependencies = try project.targets.flatMap {
-            try self.embeddableFrameworks(path: project.path, name: $0.name)
+        let embeddableDependencies = project.targets.flatMap {
+            self.embeddableFrameworks(path: project.path, name: $0.name)
         }
 
         let copyProductDependencies = project.targets.flatMap {
