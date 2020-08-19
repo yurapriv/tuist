@@ -193,7 +193,10 @@ public class ValueGraphTraverser: GraphTraversing {
     }
     
     public func hostTarget(path: AbsolutePath, name: String) -> Target? {
-        //TODO
-        return nil
+        guard let projectTargets = graph.targets[path] else { return nil }
+        return projectTargets.values.first { (target) -> Bool in
+            let targetDependencies = graph.dependencies[.target(name: target.name, path: path)]
+            return targetDependencies?.contains(.target(name: name, path: path)) == true
+        }
     }
 }

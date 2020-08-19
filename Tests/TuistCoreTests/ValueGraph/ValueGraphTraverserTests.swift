@@ -550,4 +550,8 @@ final class ValueGraphTraverserTests: TuistUnitTestCase {
             "MessageExtension",
         ])
     }
+    
+    func test_hostTarget() {
+        
+    }
 }
