@@ -25,6 +25,9 @@ public protocol Environmenting: AnyObject {
 
     /// Returns all the environment variables that are specific to Tuist (prefixed with TUIST_)
     var tuistVariables: [String: String] { get }
+
+    /// Returns the directory where statistics events are stored.
+    var statsDirectory: AbsolutePath { get }
 }
 
 /// Local environment controller.
@@ -91,6 +94,14 @@ public class Environment: Environmenting {
             return AbsolutePath(envVariable)
         } else {
             return directory.appending(component: "Versions")
+        }
+    }
+
+    public var statsDirectory: AbsolutePath {
+        if let envVariable = ProcessInfo.processInfo.environment[Constants.EnvironmentVariables.statsDirectory] {
+            return AbsolutePath(envVariable)
+        } else {
+            return directory.appending(component: "Statistics")
         }
     }
 

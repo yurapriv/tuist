@@ -2,22 +2,40 @@ import Foundation
 import TuistSupport
 
 public protocol StatsControlling {
-    func report(event: StatsEvent)
-    func report(event: StatsEvent, metadata: [AnyHashable: Any])
+    func startFlushing()
+    func report(event: StatsEventName)
+    func report(event: StatsEventName, metadata: [AnyHashable: Any])
 }
 
 // https://cloud.google.com/bigquery/docs/reference/rest
 public class StatsController: StatsControlling {
     public internal(set) static var shared: StatsControlling = StatsController()
 
+    private let bigQueryController: BigQueryControlling
+
+    // MARK: - Init
+
+    convenience init() {
+        self.init(bigQueryController: BigQueryController())
+    }
+
+    init(bigQueryController: BigQueryControlling) {
+        self.bigQueryController = bigQueryController
+    }
+
     // MARK: - StatsControlling
 
-    public func report(event: StatsEvent) {
+    public func report(event: StatsEventName) {
         report(event: event, metadata: [:])
     }
 
-    public func report(event _: StatsEvent, metadata _: [AnyHashable: Any]) {
+    public func report(event: StatsEventName, metadata: [AnyHashable: Any]) {
         guard enabled else { return }
+        bigQueryController.report(event: event, metadata: metadata)
+    }
+
+    public func startFlushing() {
+        bigQueryController.startFlushing()
     }
 
     // MARK: - Private

@@ -7,4 +7,5 @@ if CommandLine.arguments.contains("--verbose") { try? ProcessEnv.setVar("TUIST_V
 LogOutput.bootstrap()
 
 import TuistKit
+StatsController.shared.startFlushing()
 TuistCommand.main()
