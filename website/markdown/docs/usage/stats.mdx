@@ -1,0 +1,28 @@
+---
+name: Statistics
+excerpt: 'Learn what are the best options to integrate third-party dependencies into Tuist projects.'
+---
+
+# Statistics
+
+Tuist is an open-source developed by people that devote their free time.
+Therefore it's important that the limited time that we can dedicate to the project we use it wisely.
+However, it's impossible to prioritize work without data about how users use the tool.
+Questions like, _can we deprecate this version of Xcode?_, or _should we invest more into the focus command?_ are hard to answer without data.
+
+For that reason Tuist has **built-int anonymous statistics** about how users use the tool. Tuist sends events in the background to BigQuery,
+and the data is publicly available through the [stats website](https://stats.tuist.io).
+
+<Message
+  info
+  title="Disable statistics"
+  description={
+    'Statistics can be disabled by setting the environment variable `TUIST_DISABLE_STATS=1`'
+  }
+/>
+
+Although one can find the list of events that we send in the Tuist's codebase, for the sake of transparency with Tuist's users we included them in a more concise and centralized format in the following section.
+
+## Events
+
+- **Generate:** The command is sent when the generate command finishes running. If it finishes successfully, we include the time it took to generate the project.

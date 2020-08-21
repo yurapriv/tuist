@@ -24,7 +24,7 @@ public class StatsController: StatsControlling {
 
     /// Returns true if stats are enabled.
     private var enabled: Bool {
-        guard let variable = ProcessInfo.processInfo.environment[Constants.EnvironmentVariables.disableAnalytics] else {
+        guard let variable = ProcessInfo.processInfo.environment[Constants.EnvironmentVariables.disableStats] else {
             return true
         }
         return !Constants.trueValues.contains(variable)

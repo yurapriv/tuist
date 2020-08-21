@@ -33,7 +33,7 @@ public struct Constants {
         public static let cacheDirectory = "TUIST_CACHE_DIRECTORY"
         public static let cloudToken = "TUIST_CLOUD_TOKEN"
         public static let cacheManifests = "TUIST_CACHE_MANIFESTS"
-        public static let disableAnalytics = "TUIST_DISABLE_ANALYTICS"
+        public static let disableStats = "TUIST_DISABLE_STATS"
     }
 
     public struct GoogleCloud {
