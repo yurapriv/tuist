@@ -63,8 +63,9 @@ public final class GraphTraverser: GraphTraversing {
         graph.copyProductDependencies(path: path, target: target)
     }
 
-    public func allDependencyReferences(for project: Project) -> [GraphDependencyReference] {
-        graph.allDependencyReferences(for: project)
+    public func allDependencyReferences(path: AbsolutePath) -> [GraphDependencyReference] {
+        guard let project = graph.projects.first(where: {$0.path == path}) else { return [] }
+        return graph.allDependencyReferences(for: project)
     }
 
     public func staticTargets(path: AbsolutePath, name: String) -> Set<Target> {

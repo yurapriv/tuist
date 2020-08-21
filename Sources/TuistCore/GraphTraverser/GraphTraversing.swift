@@ -87,8 +87,8 @@ public protocol GraphTraversing {
 
     /// For the given project it returns all its expected dependency references.
     /// This method is useful to know which references should be added to the products directory in the generated project.
-    /// - Parameter project: Project whose dependency references will be returned.
-    func allDependencyReferences(for project: Project) -> [GraphDependencyReference]
+    /// - Parameter path: Path to the project whose dependency references will be returned.
+    func allDependencyReferences(path: AbsolutePath) -> [GraphDependencyReference]
 
     /// Returns all the transitive dependencies of the given target that are static libraries.
     /// - Parameter target: Target whose transitive static libraries will be returned.

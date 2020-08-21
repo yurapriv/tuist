@@ -181,7 +181,7 @@ public class ValueGraphTraverser: GraphTraversing {
         []
     }
 
-    public func allDependencyReferences(for _: Project) -> [GraphDependencyReference] {
+    public func allDependencyReferences(path: AbsolutePath) -> [GraphDependencyReference] {
         // TODO:
         []
     }
