@@ -3,7 +3,6 @@ import TSCBasic
 @testable import TuistCore
 
 final class MockGraphTraverser: GraphTraversing {
-
     var invokedTarget = false
     var invokedTargetCount = 0
     var invokedTargetParameters: (path: AbsolutePath, name: String)?

@@ -3,7 +3,6 @@ import TSCBasic
 import TuistSupport
 
 public class ValueGraphTraverser: GraphTraversing {
-    
     private let graph: ValueGraph
 
     public required init(graph: ValueGraph) {
@@ -146,57 +145,93 @@ public class ValueGraphTraverser: GraphTraversing {
 
         return references
     }
-    
-    public func linkableDependencies(path: AbsolutePath, name: String) -> [GraphDependencyReference] {
-        //TODO
-        return []
+
+    public func linkableDependencies(path _: AbsolutePath, name _: String) -> [GraphDependencyReference] {
+        // TODO:
+        []
     }
-    
-    public func librariesPublicHeadersFolders(path: AbsolutePath, name: String) -> [AbsolutePath] {
-        //TODO
-        return []
+
+    public func librariesPublicHeadersFolders(path _: AbsolutePath, name _: String) -> [AbsolutePath] {
+        // TODO:
+        []
     }
-    
-    public func librariesSearchPaths(path: AbsolutePath, name: String) -> [AbsolutePath] {
-        //TODO
-        return []
+
+    public func librariesSearchPaths(path _: AbsolutePath, name _: String) -> [AbsolutePath] {
+        // TODO:
+        []
     }
-    
-    public func librariesSwiftIncludePaths(path: AbsolutePath, name: String) -> [AbsolutePath] {
-        //TODO
-        return []
+
+    public func librariesSwiftIncludePaths(path _: AbsolutePath, name _: String) -> [AbsolutePath] {
+        // TODO:
+        []
     }
-    
-    public func runPathSearchPaths(path: AbsolutePath, name: String) -> [AbsolutePath] {
-        //TODO
-        return []
+
+    public func runPathSearchPaths(path _: AbsolutePath, name _: String) -> [AbsolutePath] {
+        // TODO:
+        []
     }
-    
-    public func embeddableFrameworks(path: AbsolutePath, name: String) -> [GraphDependencyReference] {
-        //TODO
-        return []
+
+    public func embeddableFrameworks(path _: AbsolutePath, name _: String) -> [GraphDependencyReference] {
+        // TODO:
+        []
     }
-    
-    public func copyProductDependencies(path: AbsolutePath, target: Target) -> [GraphDependencyReference] {
-        //TODO
-        return []
+
+    public func copyProductDependencies(path _: AbsolutePath, target _: Target) -> [GraphDependencyReference] {
+        // TODO:
+        []
     }
-    
-    public func allDependencyReferences(for project: Project) -> [GraphDependencyReference] {
-        //TODO
-        return []
+
+    public func allDependencyReferences(for _: Project) -> [GraphDependencyReference] {
+        // TODO:
+        []
     }
-    
+
     public func staticTargets(path: AbsolutePath, name: String) -> Set<Target> {
-        //TODO
-        return Set()
+        let dependencies = filterDependencies(from: .target(name: name, path: path),
+                                              test: isStatic,
+                                              skip: canLinkStaticProducts)
+        let targets = dependencies.compactMap { (dependency) -> Target? in
+            guard case let ValueGraphDependency.target(targetName, projectPath) = dependency else {
+                return nil
+            }
+            return graph.targets[projectPath]?[targetName]
+        }
+        return Set(targets)
     }
-    
+
     public func hostTarget(path: AbsolutePath, name: String) -> Target? {
         guard let projectTargets = graph.targets[path] else { return nil }
         return projectTargets.values.first { (target) -> Bool in
             let targetDependencies = graph.dependencies[.target(name: target.name, path: path)]
             return targetDependencies?.contains(.target(name: name, path: path)) == true
+        }
+    }
+
+    // MARK: - Fileprivate
+
+    fileprivate func isStatic(_ dependency: ValueGraphDependency) -> Bool {
+        switch dependency {
+        case let .framework(_, _, _, linking, _): return linking == .static
+        case let .xcframework(_, _, _, linking): return linking == .static
+        case let .library(_, _, linking, _, _): return linking == .static
+        case let .target(targetName, projectPath):
+            return graph.targets[projectPath]?[targetName]?.product.isStatic == true
+        case .packageProduct: return false
+        case .sdk: return false
+        case .cocoapods: return false
+        }
+    }
+
+    fileprivate func canLinkStaticProducts(_ dependency: ValueGraphDependency) -> Bool {
+        switch dependency {
+        case .framework: return true
+        case .xcframework: return true
+        case .library: return true
+        case let .target(targetName, projectPath):
+            return graph.targets[projectPath]?[targetName]?.canLinkStaticProducts() == true
+        case .packageProduct: return false
+        case .sdk: return false
+        case .cocoapods: return false
         }
     }
 }

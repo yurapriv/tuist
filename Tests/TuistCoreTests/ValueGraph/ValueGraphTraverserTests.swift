@@ -550,8 +550,53 @@ final class ValueGraphTraverserTests: TuistUnitTestCase {
             "MessageExtension",
         ])
     }
-    
+
+    func test_staticTargets() {
+        // Given
+        let app = Target.test(name: "App", product: .app)
+        let staticLibrary1 = Target.test(name: "Static1", product: .staticLibrary)
+        let staticLibrary2 = Target.test(name: "Static2", product: .staticLibrary)
+        let project = Project.test(targets: [app, staticLibrary1, staticLibrary2])
+        let dependencies: [ValueGraphDependency: Set<ValueGraphDependency>] = [
+            .target(name: app.name, path: project.path): Set([.target(name: staticLibrary1.name, path: project.path)]),
+            .target(name: staticLibrary1.name, path: project.path): Set([.target(name: staticLibrary2.name, path: project.path)]),
+            .target(name: staticLibrary2.name, path: project.path): Set([]),
+        ]
+        let graph = ValueGraph.test(path: project.path,
+                                    projects: [project.path: project],
+                                    targets: [project.path: [app.name: app,
+                                                             staticLibrary1.name: staticLibrary1,
+                                                             staticLibrary2.name: staticLibrary2]],
+                                    dependencies: dependencies)
+        let subject = ValueGraphTraverser(graph: graph)
+
+        // When
+        let result = subject.staticTargets(path: project.path, name: app.name)
+
+        // Then
+        XCTAssertEqual(result.sorted(), [staticLibrary1, staticLibrary2])
+    }
+
     func test_hostTarget() {
-        
+        // Given
+        let app = Target.test(name: "App", product: .app)
+        let appExtension = Target.test(name: "Extension", product: .appExtension)
+        let project = Project.test(targets: [app, appExtension])
+        let dependencies: [ValueGraphDependency: Set<ValueGraphDependency>] = [
+            .target(name: app.name, path: project.path): Set([.target(name: appExtension.name, path: project.path)]),
+            .target(name: appExtension.name, path: project.path): Set([]),
+        ]
+        let graph = ValueGraph.test(path: project.path,
+                                    projects: [project.path: project],
+                                    targets: [project.path: [app.name: app,
+                                                             appExtension.name: appExtension]],
+                                    dependencies: dependencies)
+        let subject = ValueGraphTraverser(graph: graph)
+
+        // When
+        let result = subject.hostTarget(path: project.path, name: appExtension.name)
+
+        // Then
+        XCTAssertEqual(app, result)
     }
 }
