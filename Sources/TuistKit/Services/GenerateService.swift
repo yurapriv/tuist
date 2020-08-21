@@ -1,4 +1,5 @@
 import TSCBasic
+import TuistCore
 import TuistGenerator
 import TuistLoader
 import TuistSupport
@@ -31,16 +32,28 @@ final class GenerateService {
              cache: Bool,
              cacheSources: Set<String>) throws
     {
-        let timer = clock.startTimer()
-        let path = self.path(path)
-        let generator = projectGeneratorFactory.generator(cache: cache, includeSources: cacheSources)
+        do {
+            let timer = clock.startTimer()
+            let path = self.path(path)
+            let generator = projectGeneratorFactory.generator(cache: cache, includeSources: cacheSources)
 
-        _ = try generator.generate(path: path, projectOnly: projectOnly)
+            _ = try generator.generate(path: path, projectOnly: projectOnly)
 
-        let time = String(format: "%.3f", timer.stop())
+            let time = String(format: "%.3f", timer.stop())
 
-        logger.notice("Project generated.", metadata: .success)
-        logger.notice("Total time taken: \(time)s")
+            logger.notice("Project generated.", metadata: .success)
+            logger.notice("Total time taken: \(time)s")
+
+            StatsController.shared.report(event: .generate, metadata: [
+                "time": time,
+                "success": true,
+            ])
+        } catch {
+            StatsController.shared.report(event: .generate, metadata: [
+                "success": false,
+            ])
+            throw error
+        }
     }
 
     // MARK: - Helpers
