@@ -1,4 +1,5 @@
 import Foundation
+import TuistSupport
 
 public protocol StatsControlling {
     func report(event: StatsEvent)
@@ -15,5 +16,17 @@ public class StatsController: StatsControlling {
         report(event: event, metadata: [:])
     }
 
-    public func report(event _: StatsEvent, metadata _: [AnyHashable: Any]) {}
+    public func report(event _: StatsEvent, metadata _: [AnyHashable: Any]) {
+        guard enabled else { return }
+    }
+
+    // MARK: - Private
+
+    /// Returns true if stats are enabled.
+    private var enabled: Bool {
+        guard let variable = ProcessInfo.processInfo.environment[Constants.EnvironmentVariables.disableAnalytics] else {
+            return true
+        }
+        return !Constants.trueValues.contains(variable)
+    }
 }
