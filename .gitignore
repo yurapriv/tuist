@@ -91,3 +91,6 @@ mkmf.log
 .rubocop-http---shopify-github-io-ruby-style-guide-rubocop-yml
 generated_fixtures
 .fixtures.generated.json
+
+# Keys
+Sources/TuistKit/Stats/BigQueryServiceAccountKey.swift
