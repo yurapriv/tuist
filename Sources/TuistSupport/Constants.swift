@@ -37,6 +37,10 @@ public struct Constants {
         public static let disableStats = "TUIST_DISABLE_STATS"
     }
 
+    public struct GoogleBigQuery {
+        public static let apiBaseURL: URL = URL(string: "https://bigquery.googleapis.com")!
+    }
+
     public struct GoogleCloud {
         public static let relasesBucketURL = "https://storage.googleapis.com/tuist-releases/"
     }

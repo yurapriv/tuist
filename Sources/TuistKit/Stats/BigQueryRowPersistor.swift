@@ -86,7 +86,7 @@ class BigQueryRowPersistor: BigQueryRowPersisting {
 
     fileprivate func loadRow(path: AbsolutePath) throws -> BigQueryRow? {
         let data = try FileHandler.shared.readFile(path)
-        guard let dictionary = try (JSONSerialization.jsonObject(with: data, options: []) as? [AnyHashable: Any]) ?? [:],
+        guard let dictionary = try (JSONSerialization.jsonObject(with: data, options: []) as? [AnyHashable: Any]),
             let table = dictionary["table"] as? String,
             let dataSet = dictionary["data-set"] as? String,
             let metadata = dictionary["metadata"] as? [AnyHashable: Any]
