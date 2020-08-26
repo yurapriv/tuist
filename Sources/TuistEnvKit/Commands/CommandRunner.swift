@@ -66,7 +66,7 @@ class CommandRunner: CommandRunning {
         case let .bin(path):
             logger.notice("Using bundled version at path \(path.pathString)")
         case let .versionFile(path, value):
-            logger.notice("Using version \(value) defined at \(path.pathString)")
+//            logger.notice("Using version \(value) defined at \(path.pathString)")
         default:
             break
         }
