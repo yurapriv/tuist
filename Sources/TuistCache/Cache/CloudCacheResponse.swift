@@ -25,4 +25,11 @@ struct CloudCacheResponse: Decodable {
         request.httpMethod = "POST"
         return .jsonResource { request }
     }
+    
+    public static func confirmUploadResource(hash: String, cloud: Cloud, contentMD5: String) throws -> CloudCacheResource {
+        let url = try URL.apiCacheUploadConfirmationURL(hash: hash, cacheURL: cloud.url, projectId: cloud.projectId)
+        var request = URLRequest(url: url.addingQueryItem(name: "content_md5", value: contentMD5))
+        request.httpMethod = "POST"
+        return .jsonResource { request }
+    }
 }

@@ -16,6 +16,22 @@ extension URL {
         ]
         return urlComponents.url!
     }
+    
+    static func apiCacheUploadConfirmationURL(hash: String,
+                                              cacheURL: URL,
+                                              projectId: String) throws -> URL
+    {
+        guard var urlComponents = URLComponents(url: cacheURL, resolvingAgainstBaseURL: false) else {
+            throw CacheAPIError.incorrectCloudURL
+        }
+
+        urlComponents.path = "/api/cache/upload_confirmation"
+        urlComponents.queryItems = [
+            URLQueryItem(name: "project_id", value: projectId),
+            URLQueryItem(name: "hash", value: hash),
+        ]
+        return urlComponents.url!
+    }
 
     func addingQueryItem(name: String, value: String) -> URL {
         var urlComponents = URLComponents(url: self, resolvingAgainstBaseURL: false)!
