@@ -418,7 +418,11 @@ public class Graph: Encodable, Equatable {
             self.copyProductDependencies(path: project.path, target: $0)
         }
 
-        let allDepdendencies = linkableDependencies + embeddableDependencies + copyProductDependencies
+        let appExtensionDependencies = project.targets.flatMap {
+            self.appExtensionDependencies(path: project.path, name: $0.name).map { self.productDependencyReference(for: $0) }
+        }
+
+        let allDepdendencies = linkableDependencies + embeddableDependencies + copyProductDependencies + appExtensionDependencies
         return Set(allDepdendencies).sorted()
     }
 
