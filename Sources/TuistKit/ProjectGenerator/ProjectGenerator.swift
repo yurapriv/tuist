@@ -211,6 +211,7 @@ class ProjectGenerator: ProjectGenerating {
 
         // Convert to models
         let projects = try convert(manifests: manifests)
+
         let workspaceName = manifests.projects[path]?.name ?? "Workspace"
         let workspace = Workspace(path: path, name: workspaceName, projects: [])
         let models = (workspace: workspace, projects: projects)
