@@ -27,7 +27,7 @@ protocol ProjectGenerating: AnyObject {
     ///   - project: Project to be generated.
     ///   - graph: Dependencies graph.
     /// - Returns: Generated project descriptor
-    func generate(project: Project, graph: Graph) throws -> ProjectDescriptor
+    func generate(project: Project, graph: Graph) throws -> XcodeProj
 }
 
 final class ProjectGenerator: ProjectGenerating {
@@ -63,7 +63,7 @@ final class ProjectGenerator: ProjectGenerating {
 
     // swiftlint:disable:next function_body_length
     func generate(project: Project,
-                  graph: Graph) throws -> ProjectDescriptor
+                  graph: Graph) throws -> XcodeProj
     {
         logger.notice("Generating project \(project.name)")
 
@@ -105,16 +105,7 @@ final class ProjectGenerator: ProjectGenerating {
                                                 targets: nativeTargets,
                                                 name: project.xcodeProjPath.basename)
 
-        let schemes = try schemesGenerator.generateProjectSchemes(project: project,
-                                                                  generatedProject: generatedProject,
-                                                                  graph: graph)
-
-        let xcodeProj = XcodeProj(workspace: workspace, pbxproj: pbxproj)
-        return ProjectDescriptor(path: project.path,
-                                 xcodeprojPath: project.xcodeProjPath,
-                                 xcodeProj: xcodeProj,
-                                 schemeDescriptors: schemes,
-                                 sideEffectDescriptors: [])
+        return XcodeProj(workspace: workspace, pbxproj: pbxproj)
     }
 
     // MARK: - Fileprivate

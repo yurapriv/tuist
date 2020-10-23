@@ -86,12 +86,13 @@ final class WorkspaceGenerator: WorkspaceGenerating {
         logger.notice("Generating workspace \(workspaceName)", metadata: .section)
 
         /// Projects
-        let projects = try Array(graph.projects).compactMap(context: config.projectGenerationContext) { project -> ProjectDescriptor? in
+        let xcodeProjs = try Array(graph.projects).compactMap(context: config.projectGenerationContext) { project -> XcodeProj? in
             try projectGenerator.generate(project: project, graph: graph)
         }
 
-        let generatedProjects: [AbsolutePath: GeneratedProject] = Dictionary(uniqueKeysWithValues: projects.map { project in
-            let pbxproj = project.xcodeProj.pbxproj
+        
+        let generatedProjects: [AbsolutePath: GeneratedProject] = Dictionary(uniqueKeysWithValues: xcodeProjs.map { project in
+            let pbxproj = project.pbxproj
             let targets = pbxproj.nativeTargets.map {
                 ($0.name, $0)
             }
@@ -117,7 +118,18 @@ final class WorkspaceGenerator: WorkspaceGenerating {
         }
 
         // Schemes
-
+        let projects = xcodeProjs.map { (xcodeproj) -> ProjectDescriptor in
+            let schemes = try schemesGenerator.generateProjectSchemes(project: xcodeproj,
+                                                                      generatedProject: generatedProject,
+                                                                      graph: graph)
+            return ProjectDescriptor(path: xcodeproj.path,
+                                     xcodeprojPath: project.xcodeProjPath,
+                                     xcodeProj: xcodeProj,
+                                     schemeDescriptors: schemes,
+                                     sideEffectDescriptors: [])
+        }
+        
+        
         let schemes = try schemesGenerator.generateWorkspaceSchemes(workspace: workspace,
                                                                     generatedProjects: generatedProjects,
                                                                     graph: graph)

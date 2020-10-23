@@ -27,7 +27,7 @@ protocol SchemesGenerating {
     ///   - graph: Tuist graph.
     /// - Throws: A FatalError if the generation of the schemes fails.
     func generateProjectSchemes(project: Project,
-                                generatedProject: GeneratedProject,
+                                generatedProjects: [AbsolutePath: GeneratedProject],
                                 graph: Graph) throws -> [SchemeDescriptor]
 }
 
@@ -77,7 +77,7 @@ final class SchemesGenerator: SchemesGenerating {
     }
 
     func generateProjectSchemes(project: Project,
-                                generatedProject: GeneratedProject,
+                                generatedProjects: [AbsolutePath: GeneratedProject],
                                 graph: Graph) throws -> [SchemeDescriptor]
     {
         try project.schemes.map { scheme in
@@ -217,6 +217,9 @@ final class SchemesGenerator: SchemesGenerating {
                           generatedProjects: [AbsolutePath: GeneratedProject]) throws -> XCScheme.TestAction?
     {
         guard let testAction = scheme.testAction else { return nil }
+        if (scheme.name == "Frameworks Unit Tests") {
+            print("yolo")
+        }
 
         var testables: [XCScheme.TestableReference] = []
         var preActions: [XCScheme.ExecutionAction] = []
