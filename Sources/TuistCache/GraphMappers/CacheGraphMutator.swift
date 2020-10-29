@@ -87,9 +87,18 @@ class CacheGraphMutator: CacheGraphMutating {
                                      loadedPrecompiledFrameworks: inout [AbsolutePath: PrecompiledNode]) throws -> [GraphNode]
     {
         var newDependencies: [GraphNode] = []
+        // App -> Framework (Target) -> Resources (Target)
+        // App -> Framework (precompiled) -> Resources (Target)
+        // App -> Framework (precompiled) -> Resources (precompiled)
         try dependencies.forEach { dependency in
             // If the dependency is not a target node we keep it.
             guard let targetDependency = dependency as? TargetNode else {
+                newDependencies.append(dependency)
+                return
+            }
+            
+            // If the dependency is a bundle, we keep it
+            if targetDependency.target.product == .bundle {
                 newDependencies.append(dependency)
                 return
             }

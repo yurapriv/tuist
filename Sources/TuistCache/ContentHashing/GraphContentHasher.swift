@@ -45,10 +45,10 @@ public final class GraphContentHasher: GraphContentHashing {
 
     fileprivate func isCacheable(_ target: TargetNode, visited: inout [TargetNode: Bool]) -> Bool {
         if let visitedValue = visited[target] { return visitedValue }
-        let isFramework = target.target.product == .framework || target.target.product == .staticFramework
+        let cacheableProduct = target.target.product.isFramework || target.target.product == .bundle
         let noXCTestDependency = !target.dependsOnXCTest
         let allTargetDependenciesAreHasheable = target.targetDependencies.allSatisfy { isCacheable($0, visited: &visited) }
-        let cacheable = isFramework && noXCTestDependency && allTargetDependenciesAreHasheable
+        let cacheable = cacheableProduct && noXCTestDependency && allTargetDependenciesAreHasheable
         visited[target] = cacheable
         return cacheable
     }
