@@ -131,3 +131,4 @@ final class CacheController: CacheControlling {
         _ = try cache.store(hash: hash, paths: FileHandler.shared.glob(outputDirectory, glob: "*")).toBlocking().last()
     }
 }
+
